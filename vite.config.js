@@ -11,10 +11,10 @@ export default defineConfig({
     target: 'esnext',
     rollupOptions: {
       input: {
-        index: 'src/index/index.jsx',
-        webgl01: 'src/WebGLSchool-01/main.js'
-      }
-    }
+        index: 'index.html',
+        webgl01: 'WebGLSchool-01.html',
+      },
+    },
   },
   base: '/solid-glsl'
 });
