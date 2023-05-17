@@ -1,32 +1,17 @@
 import * as THREE from 'three'
-
-class Boss {
-  constructor() {
-    this.obj
-  }
-
-  create(scene, geometry, material) {
-    this.obj = new THREE.Mesh(geometry, material)
-    this.obj.position.set(0, 0, 0)
-    scene.add(this.obj)
-  }
-
-  update(elapsed) {
-    this.obj.position.x = Math.sin(elapsed)
-  }
-}
+import Boss from './boss.js'
 
 export default class CreateMesh {
     constructor() {
       this.items = {}
 
-      this.cubeGeometry = new THREE.BoxGeometry(5, 5, 5)
-      this.cubeMaterial = new THREE.MeshBasicMaterial({ color: 'skyblue' })
+      // materials
+      this.cubeMaterial = new THREE.MeshBasicMaterial({ color: 'skyblue', transparent: true, opacity: 0.2 })
     }
 
     create(scene) {
       this.items.boss = new Boss()
-      this.items.boss.create(scene, this.cubeGeometry, this.cubeMaterial)
+      this.items.boss.create(scene, this.cubeMaterial)
     }
 
     getItems() {

@@ -42,7 +42,7 @@ function render() {
   delta = Math.max(0, Math.min(delta, 0.2))
   currentTime = elapsed
 
-  items.boss.update(elapsed)
+  items.boss.update(delta)
 
   base.renderer.render(base.scene, base.camera)
 }
