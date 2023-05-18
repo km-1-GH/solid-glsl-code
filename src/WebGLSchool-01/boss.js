@@ -2,113 +2,170 @@ import * as THREE from 'three'
 
 export default class Boss {
   constructor() {
-    this.obj
-    this.anchor
-    this.boxSize = 5
-    this.theta = 0
+    this.obj = new THREE.Object3D()
+    this.boxSize = 10
     this.jumpHeight = 0
     this.theta = 0
-    this.speed = 0
-    this.angle = 0
-    this.initialPos = { x: 0, y: 0, z: -10 }
-    this.move = [
-      {rot: 1, dir: 1},
-      {rot: 1, dir: 1},
-      {rot: -1, dir: -1},
-      {rot: 1, dir: -1},
-    ]
+    this.eyeTheta = 0
+    this.initialPos = { x: 0, y: this.boxSize * 0.5, z: -35 }
+
+    this.eyes = new THREE.Object3D()
+
+    this.eyeBeams = []
   }
 
-  create(scene, material) {
+  create(field, material, scene) {
+    // obj
     this.obj = new THREE.Mesh(
       new THREE.BoxGeometry(this.boxSize, this.boxSize, this.boxSize),
       material
     )
     this.obj.position.set(this.initialPos.x, this.initialPos.y, this.initialPos.z)
-    this.obj.userData.moveIndex = 0
+    this.obj.userData.rollIndex = 0
+    this.obj.userData.rollCount = 0
+    this.obj.userData.lookIndex = 0
     this.obj.userData.state = 'roll'
-    scene.add(this.obj)
+    field.add(this.obj)
 
-    this.anchor = new THREE.Mesh(
-      new THREE.BoxGeometry(0.1, 0.1, 0.1),
-      new THREE.MeshBasicMaterial({ color: 0xffff00 })
+    // eyes
+    const eyeSize = 1.5
+    const rightEye = new THREE.Mesh(
+      new THREE.BoxGeometry(eyeSize, eyeSize, eyeSize).translate(0, eyeSize * -0.5, -1 * eyeSize * 0.5 + 0.1),
+      material
     )
-    this.anchor.position.set(0, this.boxSize * -0.5, -10)
-    scene.add(this.anchor)
+    const leftEye = rightEye.clone()
 
+    rightEye.position.set(this.boxSize * 0.3, 0, 0)
+    leftEye.position.set(this.boxSize * -0.3, 0, 0)
+    this.eyes.add(rightEye)
+    this.eyes.add(leftEye)
+    this.eyes.visible = false
+    field.add(this.eyes)
+
+    // eyebeams
+    this.eyeBeams[0] = new THREE.SpotLight(0xffffff, 2, 8, Math.PI * 0.06, 0.2, 0.1)
+    this.eyeBeams[0].position.set(0, -2, -0.8)
+    this.eyeBeams[0].target.position.set(0, -3, -1.1)
+    this.eyeBeams[1] = new THREE.SpotLight(0xffffff, 2, 8, Math.PI * 0.06, 0.2, 0.1)
+    this.eyeBeams[1].position.set(0, -2, -0.8)
+    this.eyeBeams[1].target.position.set(0, -3, -1.1)
+    rightEye.add(this.eyeBeams[0])
+    rightEye.add(this.eyeBeams[0].target)
+    leftEye.add(this.eyeBeams[1])
+    leftEye.add(this.eyeBeams[1].target)
+
+    const rightBeamHelper = new THREE.SpotLightHelper(this.eyeBeams[0])
+    const leftBeamHelper = new THREE.SpotLightHelper(this.eyeBeams[1])
+    scene.add(rightBeamHelper)
+    scene.add(leftBeamHelper)
+
+    // for roll
     const r = Math.sqrt(2) * (this.boxSize * 0.5)
     this.jumpHeight = r - this.boxSize * 0.5
   }
 
   update(delta) {
+    switch (this.obj.userData.state) {
+      case 'roll': 
+        this.roll(delta)
+      break
+
+      case 'moveEyes':
+        this.look(delta)
+      break
+
+      case 'lookAround':
+        this.eyeTheta += delta
+        this.eyes.children.forEach((mesh, index) => {
+          mesh.rotation.z = Math.sin(this.eyeTheta * 2 + (1 * index)) * 0.3
+        })
+      break
+      default:
+    }
+  }
+
+  roll(delta) {
     // speed
-    this.speed = this.theta % (Math.PI * 0.5) / (Math.PI * 0.5) //0~1
-    this.speed = this.speed * 0.01
-    this.theta += delta + this.speed
+    let speed = this.theta % (Math.PI * 0.5) / (Math.PI * 0.5) //0~1
+    speed = speed * 0.02 + delta * 0.5
 
-    switch(this.obj.userData.moveIndex) {
+    switch(this.obj.userData.rollIndex) {
       case 0: //forward
-        this.backAndForth(delta)
-
-        if (this.obj.rotation.x > Math.PI) {
-          this.obj.rotation.x = Math.PI
-          this.obj.userData.moveIndex = 1
-          this.theta = 0
-        }
+        this.rollBox('forth', speed, 3, 'look')
       break
 
       case 1: //right
-        this.leftAndRight(delta)
- 
-        if (this.obj.rotation.z > Math.PI) {
-          this.obj.rotation.z = Math.PI
-          this.obj.userData.moveIndex = 2
-          this.theta = 0
-        }
+        this.rollBox('right', speed * 2, 1, 'pause')
       break;
 
       case 2: //backward
-        this.backAndForth(delta)
-
-        if (this.obj.rotation.x < 0) {
-          this.obj.rotation.x = 0
-          this.obj.userData.moveIndex = 3
-          this.theta = 0
-        }
+        this.rollBox('back', speed * 3, 3, 'pause')
       break
 
       case 3: //left
-        this.leftAndRight(delta)
-
-        if (this.obj.rotation.z > Math.PI * 2) {
-          this.obj.rotation.z = 0
-          this.obj.userData.moveIndex = 0
-          this.theta = 0
-        }
+        this.rollBox('left', speed * 2, 1, 'pause')
       break;
       
       default:
     }
   }
 
-  backAndForth(delta) {
-    // rotateZ
-    this.obj.rotation.x += (delta + this.speed) * this.move[this.obj.userData.moveIndex].rot
+  rollBox(dirName, speed, rollTimes, nextState) {
+    this.theta += speed
+
+    const directions = {
+      forth: { axis: new THREE.Vector3(1, 0, 0), moveDir: ['z', 1] },
+      back: { axis: new THREE.Vector3(-1, 0, 0), moveDir: ['z', -1] },
+      right: { axis: new THREE.Vector3(0, 0, -1), moveDir: ['x', 1] },
+      left: { axis: new THREE.Vector3(0, 0, 1), moveDir: ['x', -1] },
+    }
+
+    const direction = directions[dirName]
+
+    this.obj.rotateOnWorldAxis(direction.axis, speed)
     // height 
-    this.angle = Math.abs(Math.sin(this.obj.rotation.x * 2)) //90度ごとに0～1～0
-    this.obj.position.y = this.angle * this.jumpHeight
+    const angle = Math.abs(Math.sin(this.theta * 2)) //90度ごとに0～1～0
+    this.obj.position.y = angle * this.jumpHeight + this.initialPos.y
     // move forward
-    this.obj.position.z += (delta + this.speed) / (Math.PI * 0.5) * this.boxSize * this.move[this.obj.userData.moveIndex].dir
+    this.obj.position[direction.moveDir[0]] += (speed / (Math.PI * 0.5) * this.boxSize) * direction.moveDir[1]
+
+    if (this.theta > Math.PI * 0.5) {
+      // adjust rotation
+      const adjustSpeed = (Math.PI * 0.5) - this.theta
+      this.obj.rotateOnWorldAxis(direction.axis, adjustSpeed)
+      
+      this.obj.userData.rollCount ++
+      this.theta = 0
+      this.obj.userData.state = 'pause'
+    }
+
+    if (this.obj.userData.rollCount >= rollTimes) {
+      this.obj.userData.rollCount = 0
+      this.obj.userData.rollIndex ++
+      this.obj.userData.rollIndex = this.obj.userData.rollIndex >= 4 ? 0 : this.obj.userData.rollIndex 
+      this.obj.userData.state = nextState
+    }
   }
 
-  leftAndRight(delta) {
-    // rotateZ
-    this.obj.rotation.z += (delta + this.speed) * this.move[this.obj.userData.moveIndex].rot
+  look(delta) {
+    switch (this.obj.userData.lookIndex) {
+      case 0: //set position
+        this.eyes.position.set(
+          this.obj.position.x, 
+          this.obj.position.y + this.boxSize * 0.35, 
+          this.obj.position.z + this.boxSize * 0.5
+        )
+        this.eyes.visible = true
+        this.obj.userData.lookIndex ++
+      break
 
-    // height 
-    this.angle = Math.abs(Math.sin(this.obj.rotation.z * 2)) //90度ごとに0～1～0
-    this.obj.position.y = this.angle * this.jumpHeight
-    // move forward
-    this.obj.position.x += (delta + this.speed) / (Math.PI * 0.5) * this.boxSize * this.move[this.obj.userData.moveIndex].dir
+      case 1: //rotate eyes
+        this.eyes.rotation.x -= delta
+        if (this.eyes.rotation.x < -Math.PI * 0.2) {
+          this.obj.userData.lookIndex = 0
+          this.obj.userData.state = 'lookAround'
+        }
+      break
+    }
   }
 }

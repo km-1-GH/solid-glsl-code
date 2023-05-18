@@ -43,6 +43,7 @@ function render() {
   currentTime = elapsed
 
   items.boss.update(delta)
+  items.field.update(delta, items.boss.obj.userData)
 
   base.renderer.render(base.scene, base.camera)
 }
