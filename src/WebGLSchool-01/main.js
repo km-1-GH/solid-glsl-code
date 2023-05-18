@@ -2,6 +2,7 @@ import './style.scss'
 // import * as THREE from 'three'
 import SetupTHREE from './setupTHREE.js'
 import CreateMesh from './createMesh'
+import GUI from 'lil-gui'
 
 const base = new SetupTHREE()
 const createMesh = new CreateMesh()
@@ -14,6 +15,7 @@ window.addEventListener('load', () => {
   base.init(RENDER_PARAM, CAMERA_PARAM)
   createMesh.create(base.scene)
   items = createMesh.getItems()
+  init()
   render()
   base.clock.start()
 })
@@ -33,6 +35,12 @@ const CAMERA_PARAM = {
   pos: { x: 0, y: -0.5, z: 10}
 }
 
+function init() {
+  // const gui = new GUI()
+  // gui.add(base.directionalLight.position, 'x', -1, 1, 0.001)
+  // gui.add(base.directionalLight.position, 'y', -1, 1, 0.001)
+  // gui.add(base.directionalLight.position, 'z', -1, 1, 0.001)
+}
 
 function render() {
   requestAnimationFrame(render)

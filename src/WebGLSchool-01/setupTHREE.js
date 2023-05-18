@@ -37,8 +37,8 @@ export default class SetupTHREE {
     this.camera.position.set(CAMERA_PARAM.pos.x, CAMERA_PARAM.pos.y, CAMERA_PARAM.pos.z)
 
     // directional light
-    this.directionalLight = new THREE.DirectionalLight(0xffffff, 1)
-    this.directionalLight.position.set(0, -0.01, 0.05)
+    this.directionalLight = new THREE.DirectionalLight(0xffffff,0.7)
+    this.directionalLight.position.set(0, -0.637, 0.076)
     this.scene.add(this.directionalLight)
 
     // ambient light

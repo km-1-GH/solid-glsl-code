@@ -10,7 +10,7 @@ export default class Field {
 
   create(scene) {
     this.obj = new THREE.Mesh(
-      new THREE.BoxGeometry(20, 1, 60).translate(0, -0.6, -25),
+      new THREE.BoxGeometry(30, 1, 60).translate(0, -0.6, -25),
       new THREE.MeshLambertMaterial({ color: 0x333333})
     )
     this.obj.position.y = this.initialPosY

@@ -12,6 +12,7 @@ export default class Boss {
     this.eyes = new THREE.Object3D()
 
     this.eyeBeams = []
+    this.eyeBeamCones = []
   }
 
   create(field, material, scene) {
@@ -30,7 +31,7 @@ export default class Boss {
     // eyes
     const eyeSize = 1.5
     const rightEye = new THREE.Mesh(
-      new THREE.BoxGeometry(eyeSize, eyeSize, eyeSize).translate(0, eyeSize * -0.5, -1 * eyeSize * 0.5 + 0.1),
+      new THREE.BoxGeometry(eyeSize * 1.5, eyeSize, eyeSize).translate(0, eyeSize * -0.5, -1 * eyeSize * 0.5 + 0.1),
       material
     )
     const leftEye = rightEye.clone()
@@ -43,21 +44,30 @@ export default class Boss {
     field.add(this.eyes)
 
     // eyebeams
-    this.eyeBeams[0] = new THREE.SpotLight(0xffffff, 2, 8, Math.PI * 0.06, 0.2, 0.1)
+    this.eyeBeams[0] = new THREE.SpotLight(0xffffff, 2, 10, Math.PI * 0.06, 0.2, 0.1)
     this.eyeBeams[0].position.set(0, -2, -0.8)
-    this.eyeBeams[0].target.position.set(0, -3, -1.1)
-    this.eyeBeams[1] = new THREE.SpotLight(0xffffff, 2, 8, Math.PI * 0.06, 0.2, 0.1)
+    this.eyeBeams[0].target.position.set(0, -3, -1.14)
+    this.eyeBeams[1] = new THREE.SpotLight(0xffffff, 2, 10, Math.PI * 0.06, 0.2, 0.1)
     this.eyeBeams[1].position.set(0, -2, -0.8)
-    this.eyeBeams[1].target.position.set(0, -3, -1.1)
+    this.eyeBeams[1].target.position.set(0, -3, -1.14)
     rightEye.add(this.eyeBeams[0])
     rightEye.add(this.eyeBeams[0].target)
     leftEye.add(this.eyeBeams[1])
     leftEye.add(this.eyeBeams[1].target)
 
-    const rightBeamHelper = new THREE.SpotLightHelper(this.eyeBeams[0])
-    const leftBeamHelper = new THREE.SpotLightHelper(this.eyeBeams[1])
-    scene.add(rightBeamHelper)
-    scene.add(leftBeamHelper)
+    // cone
+    this.eyeBeamCones[0] = new THREE.Mesh(
+      new THREE.ConeGeometry(1.5, 12, 32, 1, false).translate(0, -5.5, -0.1).rotateX(Math.PI * 0.1),
+      new THREE.MeshBasicMaterial({ color: 0xffff00, transparent: true, opacity: 0.1 })
+    )
+    rightEye.add(this.eyeBeamCones[0])
+    this.eyeBeamCones[1] = this.eyeBeamCones[0].clone()
+    leftEye.add(this.eyeBeamCones[1])
+
+    // const rightBeamHelper = new THREE.SpotLightHelper(this.eyeBeams[0])
+    // const leftBeamHelper = new THREE.SpotLightHelper(this.eyeBeams[1])
+    // scene.add(rightBeamHelper)
+    // scene.add(leftBeamHelper)
 
     // for roll
     const r = Math.sqrt(2) * (this.boxSize * 0.5)
@@ -76,10 +86,33 @@ export default class Boss {
 
       case 'lookAround':
         this.eyeTheta += delta
-        this.eyes.children.forEach((mesh, index) => {
-          mesh.rotation.z = Math.sin(this.eyeTheta * 2 + (1 * index)) * 0.3
+        this.eyeBeams.forEach((spotlight, index) => {
+          spotlight.target.position.x = Math.sin(this.eyeTheta + 1 * index) * 0.5
         })
+        this.eyeBeamCones.forEach((spotlightCone, index) => {
+          spotlightCone.rotation.z = Math.sin(this.eyeTheta + 1 * index) * 0.75 * 0.5
+        })
+        if (this.eyeTheta > Math.PI * 3) {
+          this.obj.userData.state = 'putBackEyes'
+          this.eyeTheta = 0
+        }
       break
+
+      case 'putBackEyes': 
+        this.eyes.rotation.x += delta
+        if (this.eyes.rotation.x > 0) {
+          this.eyes.visible = false
+          this.eyeTheta = 0
+          this.eyeBeams.forEach((spotlight, index) => {
+            spotlight.target.position.x = 0
+          })
+          this.eyeBeamCones.forEach((spotlightCone, index) => {
+            spotlightCone.rotation.z = 0
+          })
+          this.obj.userData.state = 'roll'
+        }
+      break
+
       default:
     }
   }

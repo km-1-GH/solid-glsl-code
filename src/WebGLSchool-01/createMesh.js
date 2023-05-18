@@ -7,7 +7,7 @@ export default class CreateMesh {
       this.items = {}
 
       // materials
-      this.cubeMaterial = new THREE.MeshLambertMaterial({ color: 'skyblue', transparent: true, opacity: 0.5 })
+      this.cubeMaterial = new THREE.MeshLambertMaterial({ color: 'skyblue' })
     }
 
     create(scene) {
