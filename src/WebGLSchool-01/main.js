@@ -1,7 +1,8 @@
 import './style.scss'
-import * as THREE from 'three'
+// import * as THREE from 'three'
 import SetupTHREE from './setupTHREE.js'
 import CreateMesh from './createMesh'
+import globalState from './globalState.js'
 
 import { dev, devUpdate } from './dev.js'
 
@@ -38,9 +39,50 @@ const CAMERA_PARAM = {
 
 function init() {
 
-  dev(base, items)  //////////////////////////dev
+  // dev(base, items)  //////////////////////////dev
 
+  globalState.setStatus('roll')
 
+}
+
+function operation() {
+  switch (globalState.status()) {
+    case 'roll':
+      items.boss.roll(delta)
+      items.miniCubes.wander(delta)
+
+      items.pointLight1.position.x = items.boss.obj.position.x
+      items.pointLight1.position.z = items.boss.obj.position.z + 15
+
+    break
+    
+    case 'look':
+      items.pointLight1.position.z = 13.74
+    case 'pause':
+      items.field.shake(delta, items.boss.obj.userData.rollIndex)
+      items.miniCubes.resetRollAndPause(delta)
+
+    break
+
+    case 'activateEyes':
+      items.boss.activateEyes(delta)
+
+    break
+
+    case 'lookAround':
+      items.boss.lookAround(delta)
+      items.miniCubes.scatter(delta, items.boss.spotLightTargets)
+
+    break
+
+    case 'disableEyes':
+      items.boss.disableEyes(delta)
+      items.miniCubes.resetRollAndSetNextPos()
+
+    break
+
+    default:
+  }
 }
 
 function render() {
@@ -51,11 +93,8 @@ function render() {
   delta = Math.max(0, Math.min(delta, 0.2))
   currentTime = elapsed
 
-  items.boss.update(delta)
-  items.field.update(delta, items.boss.obj.userData)
-  items.miniCubes.update(delta, items.boss.obj.userData, items.boss.spotLightTargets)
+  // devUpdate() /////////////////dev
 
-  devUpdate() /////////////////dev
-
+  operation()
   base.renderer.render(base.scene, base.camera)
 }

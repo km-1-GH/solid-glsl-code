@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import globalState from './globalState.js'
 
 export default class Boss {
   constructor() {
@@ -8,7 +9,7 @@ export default class Boss {
     this.jumpHeight = 0
     this.theta = 0
     this.eyeTheta = 0
-    this.initialPos = { x: 0, y: this.boxSize * 0.5, z: -35 }
+    this.initialPos = { x: 0, y: this.boxSize * 0.5, z: -45 }
     this.savedPos = new THREE.Vector3(this.initialPos.x, this.initialPos.y, this.initialPos.z)
 
     this.eyes = new THREE.Object3D()
@@ -80,32 +81,22 @@ export default class Boss {
     this.eyeBeamCones[1].name = 'left EyeBeamCone'
     leftEye.add(this.eyeBeamCones[1])
 
+    // eyeball
+    const rightEyeBall = new THREE.Mesh(
+      // new THREE.BoxGeometry(0.8, 0.3, 0.8),
+      new THREE.SphereGeometry(0.4, 40, 40),
+      new THREE.MeshBasicMaterial(0xffffff)
+    )
+    rightEyeBall.name = 'rightEyeBall'
+    rightEyeBall.position.set(0, -1.67, -0.616)
+    this.eyeBeamCones[0].add(rightEyeBall)
+
+    const leftEyeBall = rightEyeBall.clone()
+    this.eyeBeamCones[1].add(leftEyeBall)
+
     // for roll
     const r = Math.sqrt(2) * (this.boxSize * 0.5)
     this.jumpHeight = r - this.boxSize * 0.5
-  }
-
-  update(delta) {
-    switch (this.obj.userData.state) {
-      case 'roll': 
-        this.roll(delta)
-      break
-
-      case 'moveEyes':
-        this.activateEyes(delta)
-      break
-
-      case 'lookAround':
-        this.lookAround(delta)
-      break
-
-      case 'putBackEyes': 
-        this.disableEyes(delta)
-
-      break
-
-      default:
-    }
   }
 
   roll(delta) {
@@ -115,7 +106,7 @@ export default class Boss {
 
     switch(this.obj.userData.rollIndex) {
       case 0: //forward
-        this.rollBox('forth', speed, 3, 'look')
+        this.rollBox('forth', speed, 4, 'look')
       break
 
       case 1: //right
@@ -123,7 +114,7 @@ export default class Boss {
       break;
 
       case 2: //backward
-        this.rollBox('back', speed * 3, 3, 'pause')
+        this.rollBox('back', speed * 3, 4, 'pause')
       break
 
       case 3: //left
@@ -164,14 +155,14 @@ export default class Boss {
       
       this.obj.userData.rollCount ++
       this.theta = 0
-      this.obj.userData.state = 'pause'
+      globalState.setStatus('pause')
     }
 
     if (this.obj.userData.rollCount >= rollTimes) {
       this.obj.userData.rollCount = 0
       this.obj.userData.rollIndex ++
       this.obj.userData.rollIndex = this.obj.userData.rollIndex >= 4 ? 0 : this.obj.userData.rollIndex 
-      this.obj.userData.state = nextState
+      globalState.setStatus(nextState)
     }
   }
 
@@ -188,10 +179,10 @@ export default class Boss {
       break
 
       case 1: //rotate eyes
-        this.eyes.rotation.x -= delta
+        this.eyes.rotation.x -= delta * 0.5
         if (this.eyes.rotation.x < -Math.PI * 0.2) {
           this.obj.userData.lookIndex = 0
-          this.obj.userData.state = 'lookAround'
+          globalState.setStatus('lookAround')
 
           this.spotLightTargets.forEach(target => {
             target.position.z = 2.58
@@ -213,7 +204,7 @@ export default class Boss {
       this.spotLightTargets.forEach(target => {
         target.position.z = -2
       })
-      this.obj.userData.state = 'putBackEyes'
+      globalState.setStatus('disableEyes')
       this.eyeTheta = 0
     }
   }
@@ -229,7 +220,7 @@ export default class Boss {
       this.eyeBeamCones.forEach((spotlightCone) => {
         spotlightCone.rotation.z = 0
       })
-      this.obj.userData.state = 'roll'
+      globalState.setStatus('roll')
     }
   }
 }

@@ -31,9 +31,9 @@ export default class MiniCubes {
       obj.scale.setScalar(1 + 0.03 * (i % 5)) //1 ~ 1.15
       obj.userData.initialPosY = this.boxSize * obj.scale.x * 0.5
       obj.position.set(
-        (Math.random() * 2 - 1) * 10,
+        (Math.random() * 2 - 1) * 8,
         obj.userData.initialPosY,
-        Math.random() * 5
+        Math.random() * 4 + 1
       )
       obj.userData.nextPos = new THREE.Vector3().copy(obj.position)
       obj.userData.jumpHeight = Math.sqrt(2) * (this.boxSize * obj.scale.x * 0.5) - this.boxSize * obj.scale.x * 0.5
@@ -48,102 +48,94 @@ export default class MiniCubes {
     }
   }
 
-  update(delta, bossUserData, spotLightTargets) {
-    if (bossUserData.state === 'pause' || bossUserData.state === 'look') {
-
+  resetRollAndPause(delta) {
+    this.resetRoll()
+  
+    if (this.theta * 20 > Math.PI) {
       this.objs.forEach(obj => {
-        if (obj.userData.state === 'roll') {
-          obj.userData.state = 'setDir'
-          obj.userData.theta = 0
-          obj.rotation.set(0, 0, 0)
-        }
+        obj.position.y = obj.userData.initialPosY
       })
-
-      if (this.theta * 20 > Math.PI) {
-        this.objs.forEach(obj => {
-          obj.position.y = obj.userData.initialPosY
-        })
-      } else {
-        this.theta += delta
-        this.objs.forEach((obj, index) => {
-          obj.position.y = Math.sin(this.theta * 20) * 0.5 + (index % 10) * 0.1 + obj.userData.initialPosY
-        })
-      }
-
-    } else if (bossUserData.state === 'lookAround') {
-      // set next pos
-      if (!this.nextPosSet) {
-        this.objs.forEach(obj => {
-          this.setNextPos(obj)
-        })
-        this.nextPosSet = true
-      }
-      // roll
-      this.objs.forEach((obj, objIndex) => {
-        switch (obj.userData.state) {
-          case 'setDir':
-            const distances = []
-            distances[0] = obj.getWorldPosition(new THREE.Vector3()).distanceTo(spotLightTargets[0].position)
-            distances[1] = obj.getWorldPosition(new THREE.Vector3()).distanceTo(spotLightTargets[1].position)
-            let index = distances[0] > distances[1] ? 0 : 1
-
-            const moveVector = new THREE.Vector3().subVectors(
-              obj.position, spotLightTargets[index].position
-            ).normalize()
-
-            this.setDir(obj, moveVector)
-            obj.userData.state = 'roll'
-          break
-
-          case 'roll':
-            this.roll(obj, objIndex, delta)
-          break
-        }
-      })
-
-    } else if (bossUserData.state === 'putBackEyes') {
-      this.theta = 0
-      if (this.nextPosSet) this.nextPosSet = false 
-
-      this.objs.forEach(obj => {
-        if (obj.userData.state === 'roll') {
-          obj.userData.state = 'setDir'
-          obj.userData.theta = 0
-          obj.rotation.set(0, 0, 0)
-        }
-      })
-      
     } else {
-      this.theta = 0
-
-      this.objs.forEach((obj, objIndex) => {
-        if (obj.position.distanceTo(obj.userData.nextPos) < 0.5) {
-          obj.position.copy(obj.userData.nextPos)
-
-        } else {
-          switch (obj.userData.state) {
-            case 'setDir':
-              const moveVector = new THREE.Vector3().subVectors(
-                obj.userData.nextPos, obj.position
-              ).normalize()
-              this.setDir(obj, moveVector)
-              obj.userData.state = 'roll'
-            break
-    
-            case 'roll':
-              this.roll(obj, objIndex, delta * 4)
-            break
-          }
-        }
+      this.theta += delta
+      this.objs.forEach((obj, index) => {
+        obj.position.y = Math.sin(this.theta * 20) * 0.5 + (index % 10) * 0.1 + obj.userData.initialPosY
       })
     }
   }
 
+  scatter(delta, spotLightTargets) {
+    this.objs.forEach((obj) => {
+      const distances = []
+      distances[0] = obj.getWorldPosition(new THREE.Vector3()).distanceTo(spotLightTargets[0].position)
+      distances[1] = obj.getWorldPosition(new THREE.Vector3()).distanceTo(spotLightTargets[1].position)
+      let index = distances[0] < distances[1] ? 0 : 1
+
+      switch (obj.userData.state) {
+        case 'setDir':
+          const moveVector = new THREE.Vector3().subVectors(
+            obj.position, spotLightTargets[index].position
+          ).normalize()
+          // not to move backward
+          moveVector.z = Math.abs(moveVector.z)
+          
+          this.setDir(obj, moveVector)
+          obj.userData.state = 'roll'
+        break
+          
+        case 'roll':
+          obj.userData.speed = Math.pow(1 / distances[index], 3) * 0.1
+          this.roll(obj, delta)
+        break
+      }
+    })
+  }
+
+  resetRollAndSetNextPos() {
+    this.theta = 0
+    if (this.nextPosSet) this.nextPosSet = false 
+
+    this.resetRoll()
+
+    // set next pos
+    if (!this.nextPosSet) {
+      this.objs.forEach(obj => {
+        this.setNextPos(obj)
+      })
+      this.nextPosSet = true
+    }
+  }
+
+  wander(delta) {
+    this.theta = 0
+
+    this.objs.forEach((obj, objIndex) => {
+      if (obj.position.distanceTo(obj.userData.nextPos) < 0.2) {
+        obj.position.copy(obj.userData.nextPos)
+
+      } else {
+        switch (obj.userData.state) {
+          case 'setDir':
+            const moveVector = new THREE.Vector3().subVectors(
+              obj.userData.nextPos, obj.position
+            ).normalize()
+            obj.userData.speed = (objIndex % 3) * 0.01
+            this.setDir(obj, moveVector)
+            obj.userData.state = 'roll'
+          break
+  
+          case 'roll':
+            this.roll(obj, delta * 10)
+          break
+        }
+      }
+    })
+  }
+
   setNextPos(obj) {
     obj.userData.nextPos.set(
-      (Math.random() * 2 - 1) * 10,
+      (Math.random() * 2 - 1) * 8,
       obj.userData.initialPosY,
-      Math.random() * 5
+      Math.random() * 4 + 1
     )
   }
 
@@ -153,8 +145,8 @@ export default class MiniCubes {
     obj.userData.moveDir = moveVector[obj.userData.moveAxis] > 0 ? 1 : -1
   }
 
-  roll(obj, index, delta) {
-    const speed = delta + (index % 3) * 0.05
+  roll(obj, delta) {
+    const speed = delta + obj.userData.speed
     obj.userData.theta += speed
     obj.userData.moveAxis === 'x' ? obj.userData.rollAxisVector.set(0, 0, obj.userData.moveDir * -1)
       : obj.userData.rollAxisVector.set(obj.userData.moveDir, 0, 0)
@@ -167,11 +159,21 @@ export default class MiniCubes {
     // move forward
     obj.position[obj.userData.moveAxis] += (speed / (Math.PI * 0.5) * this.boxSize * obj.scale.x) * obj.userData.moveDir
 
-    if (obj.userData.theta.theta > Math.PI * 0.5) {
+    if (obj.userData.theta > Math.PI * 0.5) {
       const adjustSpeed = (Math.PI * 0.5) - obj.userData.theta
       obj.rotateOnWorldAxis(obj.userData.rollAxisVector, adjustSpeed)
       obj.userData.theta = 0
       obj.userData.state = 'setDir'
     }
+  }
+
+  resetRoll() {
+    this.objs.forEach(obj => {
+      if (obj.userData.state === 'roll') {
+        obj.userData.state = 'setDir'
+        obj.userData.theta = 0
+        obj.rotation.set(0, 0, 0)
+      }
+    })
   }
 }
