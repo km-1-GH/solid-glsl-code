@@ -3,24 +3,27 @@ import * as THREE from 'three'
 export default class Boss {
   constructor() {
     this.obj = new THREE.Object3D()
+
     this.boxSize = 10
     this.jumpHeight = 0
     this.theta = 0
     this.eyeTheta = 0
     this.initialPos = { x: 0, y: this.boxSize * 0.5, z: -35 }
+    this.savedPos = new THREE.Vector3(this.initialPos.x, this.initialPos.y, this.initialPos.z)
 
     this.eyes = new THREE.Object3D()
 
     this.eyeBeams = []
     this.eyeBeamCones = []
+    this.spotLightTargets = []
   }
 
-  create(field, material, scene) {
+  create(field, scene) {
     // obj
-    this.obj = new THREE.Mesh(
-      new THREE.BoxGeometry(this.boxSize, this.boxSize, this.boxSize),
-      material
-    )
+    const geometry = new THREE.BoxGeometry(this.boxSize, this.boxSize, this.boxSize)
+    const material = new THREE.MeshLambertMaterial({ color: 0x6136d9 })
+
+    this.obj = new THREE.Mesh( geometry, material )
     this.obj.position.set(this.initialPos.x, this.initialPos.y, this.initialPos.z)
     this.obj.userData.rollIndex = 0
     this.obj.userData.rollCount = 0
@@ -44,30 +47,38 @@ export default class Boss {
     field.add(this.eyes)
 
     // eyebeams
-    this.eyeBeams[0] = new THREE.SpotLight(0xffffff, 2, 10, Math.PI * 0.06, 0.2, 0.1)
-    this.eyeBeams[0].position.set(0, -2, -0.8)
-    this.eyeBeams[0].target.position.set(0, -3, -1.14)
-    this.eyeBeams[1] = new THREE.SpotLight(0xffffff, 2, 10, Math.PI * 0.06, 0.2, 0.1)
-    this.eyeBeams[1].position.set(0, -2, -0.8)
-    this.eyeBeams[1].target.position.set(0, -3, -1.14)
+    this.spotLightTargets[0] = new THREE.Mesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.MeshNormalMaterial()
+    )
+    this.spotLightTargets[0].position.set(this.boxSize * 0.3, -3, -2)
+    this.spotLightTargets[0].userData.initialPosX = this.boxSize * 0.3
+    this.spotLightTargets[0].visible = false
+    scene.add(this.spotLightTargets[0])
+    this.spotLightTargets[1] = this.spotLightTargets[0].clone()
+    this.spotLightTargets[1].position.set(this.boxSize * -0.3, -3, -2)
+    this.spotLightTargets[1].userData.initialPosX = this.boxSize * -0.3
+    scene.add(this.spotLightTargets[1])
+
+    this.eyeBeams[0] = new THREE.SpotLight(0xffffff, 2, 11, Math.PI * 0.06, 0.2, 0.1)
+    this.eyeBeams[0].position.set(0, 0, -0.1)
+    this.eyeBeams[0].target = this.spotLightTargets[0]
+    this.eyeBeams[1] = new THREE.SpotLight(0xffffff, 2, 11, Math.PI * 0.06, 0.2, 0.1)
+    this.eyeBeams[1].position.set(0, 0, -0.1)
+    this.eyeBeams[1].target = this.spotLightTargets[1]
     rightEye.add(this.eyeBeams[0])
-    rightEye.add(this.eyeBeams[0].target)
     leftEye.add(this.eyeBeams[1])
-    leftEye.add(this.eyeBeams[1].target)
 
     // cone
     this.eyeBeamCones[0] = new THREE.Mesh(
-      new THREE.ConeGeometry(1.5, 12, 32, 1, false).translate(0, -5.5, -0.1).rotateX(Math.PI * 0.1),
-      new THREE.MeshBasicMaterial({ color: 0xffff00, transparent: true, opacity: 0.1 })
+      new THREE.ConeGeometry(1.8, 12, 32, 1, false).translate(0, -5.5, -0.1).rotateX(Math.PI * 0.1),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 })
     )
+    this.eyeBeamCones[0].name = 'rightEyeBeamCone'
     rightEye.add(this.eyeBeamCones[0])
     this.eyeBeamCones[1] = this.eyeBeamCones[0].clone()
+    this.eyeBeamCones[1].name = 'left EyeBeamCone'
     leftEye.add(this.eyeBeamCones[1])
-
-    // const rightBeamHelper = new THREE.SpotLightHelper(this.eyeBeams[0])
-    // const leftBeamHelper = new THREE.SpotLightHelper(this.eyeBeams[1])
-    // scene.add(rightBeamHelper)
-    // scene.add(leftBeamHelper)
 
     // for roll
     const r = Math.sqrt(2) * (this.boxSize * 0.5)
@@ -81,36 +92,16 @@ export default class Boss {
       break
 
       case 'moveEyes':
-        this.look(delta)
+        this.activateEyes(delta)
       break
 
       case 'lookAround':
-        this.eyeTheta += delta
-        this.eyeBeams.forEach((spotlight, index) => {
-          spotlight.target.position.x = Math.sin(this.eyeTheta + 1 * index) * 0.5
-        })
-        this.eyeBeamCones.forEach((spotlightCone, index) => {
-          spotlightCone.rotation.z = Math.sin(this.eyeTheta + 1 * index) * 0.75 * 0.5
-        })
-        if (this.eyeTheta > Math.PI * 3) {
-          this.obj.userData.state = 'putBackEyes'
-          this.eyeTheta = 0
-        }
+        this.lookAround(delta)
       break
 
       case 'putBackEyes': 
-        this.eyes.rotation.x += delta
-        if (this.eyes.rotation.x > 0) {
-          this.eyes.visible = false
-          this.eyeTheta = 0
-          this.eyeBeams.forEach((spotlight, index) => {
-            spotlight.target.position.x = 0
-          })
-          this.eyeBeamCones.forEach((spotlightCone, index) => {
-            spotlightCone.rotation.z = 0
-          })
-          this.obj.userData.state = 'roll'
-        }
+        this.disableEyes(delta)
+
       break
 
       default:
@@ -166,6 +157,10 @@ export default class Boss {
       // adjust rotation
       const adjustSpeed = (Math.PI * 0.5) - this.theta
       this.obj.rotateOnWorldAxis(direction.axis, adjustSpeed)
+      // adjust pos
+      this.obj.position[direction.moveDir[0]] = this.boxSize * direction.moveDir[1] + this.savedPos[direction.moveDir[0]]
+      this.obj.position.y = this.savedPos.y
+      this.savedPos.copy(this.obj.position)
       
       this.obj.userData.rollCount ++
       this.theta = 0
@@ -180,7 +175,7 @@ export default class Boss {
     }
   }
 
-  look(delta) {
+  activateEyes(delta) {
     switch (this.obj.userData.lookIndex) {
       case 0: //set position
         this.eyes.position.set(
@@ -197,8 +192,44 @@ export default class Boss {
         if (this.eyes.rotation.x < -Math.PI * 0.2) {
           this.obj.userData.lookIndex = 0
           this.obj.userData.state = 'lookAround'
+
+          this.spotLightTargets.forEach(target => {
+            target.position.z = 2.58
+          })
         }
       break
+    }
+  }
+
+  lookAround(delta) {
+    this.eyeTheta += delta
+    this.spotLightTargets.forEach((target, index) => {
+      target.position.x = Math.sin(this.eyeTheta * 1.5 + 1.5 * index) * 2.6 + target.userData.initialPosX
+    })
+    this.eyeBeamCones.forEach((spotlightCone, index) => {
+      spotlightCone.rotation.z = Math.sin(this.eyeTheta * 1.5 + 1.5 * index) * 0.3
+    })
+    if (this.eyeTheta > Math.PI * 2.5) {
+      this.spotLightTargets.forEach(target => {
+        target.position.z = -2
+      })
+      this.obj.userData.state = 'putBackEyes'
+      this.eyeTheta = 0
+    }
+  }
+
+  disableEyes(delta) {
+    this.eyes.rotation.x += delta
+    if (this.eyes.rotation.x > 0) {
+      this.eyes.visible = false
+      this.eyeTheta = 0
+      this.eyeBeams.forEach((spotlight) => {
+        spotlight.target.position.x = 0
+      })
+      this.eyeBeamCones.forEach((spotlightCone) => {
+        spotlightCone.rotation.z = 0
+      })
+      this.obj.userData.state = 'roll'
     }
   }
 }

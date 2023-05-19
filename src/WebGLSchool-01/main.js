@@ -1,8 +1,9 @@
 import './style.scss'
-// import * as THREE from 'three'
+import * as THREE from 'three'
 import SetupTHREE from './setupTHREE.js'
 import CreateMesh from './createMesh'
-import GUI from 'lil-gui'
+
+import { dev, devUpdate } from './dev.js'
 
 const base = new SetupTHREE()
 const createMesh = new CreateMesh()
@@ -25,7 +26,7 @@ window.addEventListener('resize', () => {
 })
 
 const RENDER_PARAM = {
-  clearColor: 0x1f2141,
+  clearColor: 0x181c2f,
 }
 
 const CAMERA_PARAM = {
@@ -36,10 +37,10 @@ const CAMERA_PARAM = {
 }
 
 function init() {
-  // const gui = new GUI()
-  // gui.add(base.directionalLight.position, 'x', -1, 1, 0.001)
-  // gui.add(base.directionalLight.position, 'y', -1, 1, 0.001)
-  // gui.add(base.directionalLight.position, 'z', -1, 1, 0.001)
+
+  dev(base, items)  //////////////////////////dev
+
+
 }
 
 function render() {
@@ -52,6 +53,9 @@ function render() {
 
   items.boss.update(delta)
   items.field.update(delta, items.boss.obj.userData)
+  items.miniCubes.update(delta, items.boss.obj.userData, items.boss.spotLightTargets)
+
+  devUpdate() /////////////////dev
 
   base.renderer.render(base.scene, base.camera)
 }

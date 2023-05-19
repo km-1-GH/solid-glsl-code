@@ -10,7 +10,7 @@ export default class Field {
 
   create(scene) {
     this.obj = new THREE.Mesh(
-      new THREE.BoxGeometry(30, 1, 60).translate(0, -0.6, -25),
+      new THREE.BoxGeometry(30, 1, 80).translate(0, -0.6, -25),
       new THREE.MeshLambertMaterial({ color: 0x333333})
     )
     this.obj.position.y = this.initialPosY
@@ -18,10 +18,10 @@ export default class Field {
     scene.add(this.obj)
   }
 
-  update(delta, boxUserdata) {
+  update(delta, bossUserData) {
     this.theta += delta
 
-    if ( boxUserdata.state === 'pause' || boxUserdata.state === 'look') {
+    if ( bossUserData.state === 'pause' || bossUserData.state === 'look') {
       this.obj.position.y -= Math.sin(this.theta * 20) * this.shakeR
       if (this.theta * 20 > Math.PI * 2) {
         this.theta = 0
@@ -29,10 +29,10 @@ export default class Field {
         this.obj.position.y = this.initialPosY
         if (this.shakeR <= 0) {
           this.shakeR = 0.3
-          if (boxUserdata.state === 'look')
-            boxUserdata.state = 'moveEyes'
+          if (bossUserData.state === 'look')
+            bossUserData.state = 'moveEyes'
           else {
-            boxUserdata.state = 'roll'
+            bossUserData.state = 'roll'
           }
         }
       }
