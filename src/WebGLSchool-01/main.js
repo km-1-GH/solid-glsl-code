@@ -15,11 +15,14 @@ let delta = 0
 
 window.addEventListener('load', () => {
   base.init(RENDER_PARAM, CAMERA_PARAM)
-  createMesh.create(base.scene)
-  items = createMesh.getItems()
-  init()
-  render()
-  base.clock.start()
+
+  // promise
+  createMesh.create(base.scene).then(() => {
+    items = createMesh.getItems()
+    init()
+    render()
+    base.clock.start()
+  })
 })
 
 window.addEventListener('resize', () => {

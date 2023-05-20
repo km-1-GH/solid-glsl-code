@@ -20,83 +20,87 @@ export default class Boss {
   }
 
   create(field, scene) {
-    // obj
-    const geometry = new THREE.BoxGeometry(this.boxSize, this.boxSize, this.boxSize)
-    const material = new THREE.MeshLambertMaterial({ color: 0x6136d9 })
+    return new Promise(resolve => {
+      // obj
+      const geometry = new THREE.BoxGeometry(this.boxSize, this.boxSize, this.boxSize)
+      const material = new THREE.MeshLambertMaterial({ color: 0x6136d9 })
+  
+      this.obj = new THREE.Mesh( geometry, material )
+      this.obj.position.set(this.initialPos.x, this.initialPos.y, this.initialPos.z)
+      this.obj.userData.rollIndex = 0
+      this.obj.userData.rollCount = 0
+      this.obj.userData.lookIndex = 0
+      this.obj.userData.state = 'roll'
+      field.add(this.obj)
+  
+      // eyes
+      const eyeSize = 1.5
+      const rightEye = new THREE.Mesh(
+        new THREE.BoxGeometry(eyeSize * 1.5, eyeSize, eyeSize).translate(0, eyeSize * -0.5, -1 * eyeSize * 0.5 + 0.1),
+        material
+      )
+      const leftEye = rightEye.clone()
+  
+      rightEye.position.set(this.boxSize * 0.3, 0, 0)
+      leftEye.position.set(this.boxSize * -0.3, 0, 0)
+      this.eyes.add(rightEye)
+      this.eyes.add(leftEye)
+      this.eyes.visible = false
+      field.add(this.eyes)
+  
+      // eyebeams
+      this.spotLightTargets[0] = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshNormalMaterial()
+      )
+      this.spotLightTargets[0].position.set(this.boxSize * 0.3, -3, -2)
+      this.spotLightTargets[0].userData.initialPosX = this.boxSize * 0.3
+      this.spotLightTargets[0].visible = false
+      scene.add(this.spotLightTargets[0])
+      this.spotLightTargets[1] = this.spotLightTargets[0].clone()
+      this.spotLightTargets[1].position.set(this.boxSize * -0.3, -3, -2)
+      this.spotLightTargets[1].userData.initialPosX = this.boxSize * -0.3
+      scene.add(this.spotLightTargets[1])
+  
+      this.eyeBeams[0] = new THREE.SpotLight(0xffffff, 2, 11, Math.PI * 0.06, 0.2, 0.1)
+      this.eyeBeams[0].position.set(0, 0, -0.1)
+      this.eyeBeams[0].target = this.spotLightTargets[0]
+      this.eyeBeams[1] = new THREE.SpotLight(0xffffff, 2, 11, Math.PI * 0.06, 0.2, 0.1)
+      this.eyeBeams[1].position.set(0, 0, -0.1)
+      this.eyeBeams[1].target = this.spotLightTargets[1]
+      rightEye.add(this.eyeBeams[0])
+      leftEye.add(this.eyeBeams[1])
+  
+      // cone
+      this.eyeBeamCones[0] = new THREE.Mesh(
+        new THREE.ConeGeometry(1.8, 12, 32, 1, false).translate(0, -5.5, -0.1).rotateX(Math.PI * 0.1),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 })
+      )
+      this.eyeBeamCones[0].name = 'rightEyeBeamCone'
+      rightEye.add(this.eyeBeamCones[0])
+      this.eyeBeamCones[1] = this.eyeBeamCones[0].clone()
+      this.eyeBeamCones[1].name = 'left EyeBeamCone'
+      leftEye.add(this.eyeBeamCones[1])
+  
+      // eyeball
+      const rightEyeBall = new THREE.Mesh(
+        // new THREE.BoxGeometry(0.8, 0.3, 0.8),
+        new THREE.SphereGeometry(0.4, 40, 40),
+        new THREE.MeshBasicMaterial(0xffffff)
+      )
+      rightEyeBall.name = 'rightEyeBall'
+      rightEyeBall.position.set(0, -1.67, -0.616)
+      this.eyeBeamCones[0].add(rightEyeBall)
+  
+      const leftEyeBall = rightEyeBall.clone()
+      this.eyeBeamCones[1].add(leftEyeBall)
+  
+      // for roll
+      const r = Math.sqrt(2) * (this.boxSize * 0.5)
+      this.jumpHeight = r - this.boxSize * 0.5
 
-    this.obj = new THREE.Mesh( geometry, material )
-    this.obj.position.set(this.initialPos.x, this.initialPos.y, this.initialPos.z)
-    this.obj.userData.rollIndex = 0
-    this.obj.userData.rollCount = 0
-    this.obj.userData.lookIndex = 0
-    this.obj.userData.state = 'roll'
-    field.add(this.obj)
-
-    // eyes
-    const eyeSize = 1.5
-    const rightEye = new THREE.Mesh(
-      new THREE.BoxGeometry(eyeSize * 1.5, eyeSize, eyeSize).translate(0, eyeSize * -0.5, -1 * eyeSize * 0.5 + 0.1),
-      material
-    )
-    const leftEye = rightEye.clone()
-
-    rightEye.position.set(this.boxSize * 0.3, 0, 0)
-    leftEye.position.set(this.boxSize * -0.3, 0, 0)
-    this.eyes.add(rightEye)
-    this.eyes.add(leftEye)
-    this.eyes.visible = false
-    field.add(this.eyes)
-
-    // eyebeams
-    this.spotLightTargets[0] = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 1, 1),
-      new THREE.MeshNormalMaterial()
-    )
-    this.spotLightTargets[0].position.set(this.boxSize * 0.3, -3, -2)
-    this.spotLightTargets[0].userData.initialPosX = this.boxSize * 0.3
-    this.spotLightTargets[0].visible = false
-    scene.add(this.spotLightTargets[0])
-    this.spotLightTargets[1] = this.spotLightTargets[0].clone()
-    this.spotLightTargets[1].position.set(this.boxSize * -0.3, -3, -2)
-    this.spotLightTargets[1].userData.initialPosX = this.boxSize * -0.3
-    scene.add(this.spotLightTargets[1])
-
-    this.eyeBeams[0] = new THREE.SpotLight(0xffffff, 2, 11, Math.PI * 0.06, 0.2, 0.1)
-    this.eyeBeams[0].position.set(0, 0, -0.1)
-    this.eyeBeams[0].target = this.spotLightTargets[0]
-    this.eyeBeams[1] = new THREE.SpotLight(0xffffff, 2, 11, Math.PI * 0.06, 0.2, 0.1)
-    this.eyeBeams[1].position.set(0, 0, -0.1)
-    this.eyeBeams[1].target = this.spotLightTargets[1]
-    rightEye.add(this.eyeBeams[0])
-    leftEye.add(this.eyeBeams[1])
-
-    // cone
-    this.eyeBeamCones[0] = new THREE.Mesh(
-      new THREE.ConeGeometry(1.8, 12, 32, 1, false).translate(0, -5.5, -0.1).rotateX(Math.PI * 0.1),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 })
-    )
-    this.eyeBeamCones[0].name = 'rightEyeBeamCone'
-    rightEye.add(this.eyeBeamCones[0])
-    this.eyeBeamCones[1] = this.eyeBeamCones[0].clone()
-    this.eyeBeamCones[1].name = 'left EyeBeamCone'
-    leftEye.add(this.eyeBeamCones[1])
-
-    // eyeball
-    const rightEyeBall = new THREE.Mesh(
-      // new THREE.BoxGeometry(0.8, 0.3, 0.8),
-      new THREE.SphereGeometry(0.4, 40, 40),
-      new THREE.MeshBasicMaterial(0xffffff)
-    )
-    rightEyeBall.name = 'rightEyeBall'
-    rightEyeBall.position.set(0, -1.67, -0.616)
-    this.eyeBeamCones[0].add(rightEyeBall)
-
-    const leftEyeBall = rightEyeBall.clone()
-    this.eyeBeamCones[1].add(leftEyeBall)
-
-    // for roll
-    const r = Math.sqrt(2) * (this.boxSize * 0.5)
-    this.jumpHeight = r - this.boxSize * 0.5
+      resolve()
+    })
   }
 
   roll(delta) {

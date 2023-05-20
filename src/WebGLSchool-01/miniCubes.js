@@ -13,39 +13,42 @@ export default class MiniCubes {
   }
 
   create(field) {
-    const geometry = new THREE.BoxGeometry(this.boxSize, this.boxSize, this.boxSize)
-
-    const colors = [
-      new THREE.Color(0x00ffd5),
-      new THREE.Color(0x00b3ff),
-      new THREE.Color(0xffffff),
-    ]
-
-    const materials = []
-    for (let i = 0; i < colors.length; i++) {
-      materials[i] = new THREE.MeshLambertMaterial({ color: colors[i] })
-    }
-
-    for (let i = 0; i < 150; i++) { ///150
-      const obj = new THREE.Mesh(geometry, materials[Math.floor(Math.random() * colors.length)])
-      obj.scale.setScalar(1 + 0.03 * (i % 5)) //1 ~ 1.15
-      obj.userData.initialPosY = this.boxSize * obj.scale.x * 0.5
-      obj.position.set(
-        (Math.random() * 2 - 1) * 8,
-        obj.userData.initialPosY,
-        Math.random() * 4 + 1
-      )
-      obj.userData.nextPos = new THREE.Vector3().copy(obj.position)
-      obj.userData.jumpHeight = Math.sqrt(2) * (this.boxSize * obj.scale.x * 0.5) - this.boxSize * obj.scale.x * 0.5
-      obj.userData.rollAxisVector = new THREE.Vector3()
-      obj.userData.moveAxis = ''
-      obj.userData.moveDir = 1
-      obj.userData.theta = 0
-      obj.userData.state = 'setDir'
-
-      field.add(obj)
-      this.objs.push(obj)
-    }
+    return new Promise(resolve => {
+      const geometry = new THREE.BoxGeometry(this.boxSize, this.boxSize, this.boxSize)
+  
+      const colors = [
+        new THREE.Color(0x00ffd5),
+        new THREE.Color(0x00b3ff),
+        new THREE.Color(0xffffff),
+      ]
+  
+      const materials = []
+      for (let i = 0; i < colors.length; i++) {
+        materials[i] = new THREE.MeshLambertMaterial({ color: colors[i] })
+      }
+  
+      for (let i = 0; i < 150; i++) { ///150
+        const obj = new THREE.Mesh(geometry, materials[Math.floor(Math.random() * colors.length)])
+        obj.scale.setScalar(1 + 0.03 * (i % 5)) //1 ~ 1.15
+        obj.userData.initialPosY = this.boxSize * obj.scale.x * 0.5
+        obj.position.set(
+          (Math.random() * 2 - 1) * 8,
+          obj.userData.initialPosY,
+          Math.random() * 4 + 1
+        )
+        obj.userData.nextPos = new THREE.Vector3().copy(obj.position)
+        obj.userData.jumpHeight = Math.sqrt(2) * (this.boxSize * obj.scale.x * 0.5) - this.boxSize * obj.scale.x * 0.5
+        obj.userData.rollAxisVector = new THREE.Vector3()
+        obj.userData.moveAxis = ''
+        obj.userData.moveDir = 1
+        obj.userData.theta = 0
+        obj.userData.state = 'setDir'
+  
+        field.add(obj)
+        this.objs.push(obj)
+      }
+      resolve()
+    })
   }
 
   resetRollAndPause(delta) {

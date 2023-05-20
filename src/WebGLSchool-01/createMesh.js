@@ -9,14 +9,18 @@ export default class CreateMesh {
   }
 
   create(scene) {
-    this.createLights(scene)
+    return new Promise(resolve => {
+      this.createLights(scene)
+  
+      this.items.field = new Field()
+      const pField = this.items.field.create(scene) // Promise
+      this.items.boss = new Boss()
+      const pBoss = this.items.boss.create(this.items.field.obj, scene) // Promise
+      this.items.miniCubes = new MiniCubes()
+      const pMiniCubes = this.items.miniCubes.create(this.items.field.obj) // Promise
 
-    this.items.field = new Field()
-    this.items.field.create(scene)
-    this.items.boss = new Boss()
-    this.items.boss.create(this.items.field.obj, scene)
-    this.items.miniCubes = new MiniCubes()
-    this.items.miniCubes.create(this.items.field.obj)
+      Promise.all([pField, pBoss, pMiniCubes]).then(resolve)
+    })
   }
 
   getItems() {
