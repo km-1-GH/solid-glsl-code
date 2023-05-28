@@ -7,6 +7,7 @@ export default defineConfig({
     port: 3000,
     open: '/index.html',
     base: '/',
+    hmr: false,
   },
   build: {
     target: 'esnext',
@@ -14,6 +15,7 @@ export default defineConfig({
       input: {
         index: 'index.html',
         webgl01: 'WebGLSchool-01.html',
+        webgl02: 'WebGLSchool-02.html',
       },
     },
   },
