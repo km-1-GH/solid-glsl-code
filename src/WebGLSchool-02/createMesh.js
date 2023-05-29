@@ -8,7 +8,7 @@ export default class CreateMesh {
 
   create(scene) {
     return new Promise(resolve => {
-      this.createLights(scene)
+      // this.createLights(scene)
 
       this.items.fan = new Fan()
       const pFan = this.items.fan.create(scene)

@@ -41,15 +41,19 @@ const CAMERA_PARAM = {
 }
 
 function init() {
-
   dev(base, items)  //////////////////////////dev
 
-  globalState.setStatus('roll')
+  items.fan.switchOn(base)
 
 }
 
-function operation() {
+async function operation() {
   switch (globalState.status()) {
+
+    case 'running':
+      items.fan.rotateHead(delta)
+      items.fan.rotateFan(delta)
+    break
 
     default:
   }
@@ -63,11 +67,10 @@ function render() {
   delta = Math.max(0, Math.min(delta, 0.2))
   currentTime = elapsed
 
-  items.fan.rotateHead(elapsed)
-  items.fan.rotateFan(delta)
 
   // devUpdate() /////////////////dev
 
   operation()
-  base.renderer.render(base.scene, base.camera)
+  base.composer.render()
 }
+

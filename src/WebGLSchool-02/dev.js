@@ -20,16 +20,14 @@ export function dev(base, items) {
     base.renderer.setClearColor(value)
   })
 
-  // point light position
-  gui.add(items.pointLight.position, 'x', -10, 10, 0.001).name('lightPos.x')
-  gui.add(items.pointLight.position, 'y', -3, 10, 0.001).name('lightPos.y')
-  gui.add(items.pointLight.position, 'z', -30, 20, 0.001).name('lightPos.z')
+  // bloom
+  gui.add(base.effect.luminancePass.fullscreenMaterial, 'threshold', 0, 1, 0.01)
+  gui.add(base.effect.luminancePass.fullscreenMaterial, 'smoothing', 0, 1, 0.01)
 
-  // boss color
-  // guiParam.bossColor = items.boss.obj.material.color.getHexString()
-  // gui.addColor(guiParam, 'bossColor').onChange(value => {
-  //   items.boss.obj.material.color.set(value)
-  // })
+  guiParam.bloomIntensity = 1
+  gui.add(guiParam, 'bloomIntensity', 0, 10, 0.1).onChange(value => {
+    base.effect.uniforms.get('intensity').value = value
+  })
 
   // positioner
   // const positioners = []

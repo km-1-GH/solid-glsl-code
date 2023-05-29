@@ -1,8 +1,12 @@
 import * as THREE from 'three'
+import { EffectComposer, EffectPass, RenderPass, SelectiveBloomEffect, BlendFunction } from "postprocessing";
 
 export default class SetupTHREE {
   constructor() {
     this.renderer
+    this.composer
+    this.effect
+    this.selection
     this.scene
     this.camera
     this.directionalLight
@@ -15,8 +19,10 @@ export default class SetupTHREE {
   init(RENDER_PARAM, CAMERA_PARAM) {
     // renderer
     this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
+      powerPreference: "high-performance",
+      antialias: false,
+      stencil: false,
+      depth: false
     })
     this.renderer.setClearColor(new THREE.Color(RENDER_PARAM.clearColor))
     this.renderer.setSize(window.innerWidth, window.innerHeight)
@@ -34,6 +40,21 @@ export default class SetupTHREE {
       CAMERA_PARAM.far
     )
     this.camera.position.set(CAMERA_PARAM.pos.x, CAMERA_PARAM.pos.y, CAMERA_PARAM.pos.z)
+
+    // post processing
+    this.effect = new SelectiveBloomEffect(this.scene, this.camera, {
+      blendFunction: BlendFunction.ADD,
+      mipmapBlur: true,
+      luminanceThreshold: 0.15,
+      luminanceSmoothing: 0.44,
+      intensity: 10
+    })
+    this.effect.outputColorSpace = 'srgb'
+    this.selection = this.effect.selection
+
+    this.composer = new EffectComposer(this.renderer);
+    this.composer.addPass(new RenderPass(this.scene, this.camera));
+    this.composer.addPass(new EffectPass(this.camera, this.effect));
 
 
     // clock
