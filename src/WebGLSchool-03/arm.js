@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import globalState from './globalState'
-import { C } from '../../dist/assets/solid-7e9e2f59'
 
 export default class Arm {
   constructor(scale) {
@@ -8,30 +7,34 @@ export default class Arm {
     this.base = new THREE.Object3D()
     this.anchor = new THREE.Object3D()
     this.claws = []
-    this.time = 0
-    this.planeTheta = 0
-    this.planeDirection = new THREE.Vector3(0, 0, 0.9)
-    this.initialVector = new THREE.Vector3(1, 0, 0)
-    // this.direction = new THREE.Vector3(0, 0, 0.1)
-    // this.axis = new THREE.Vector3()
-    // this.quaternion = new THREE.Quaternion()
 
+    // fly
+    this.planeTheta = 0
+    this.initialVector = new THREE.Vector3(0, 1, 0)
+
+    // seize
     this.armTheta = 0
-    this.stopArmTheta = Math.PI * 0.5
+    this.stopArmTheta = Math.PI * 0.25
+    // base rotation 
+    this.destRotZ = Math.random() * Math.PI * 2
+
+    // collision
+    this.box3 = new THREE.Box3()
+    this.headBox
   }
 
   create(scene, gLoader, tLoader) {
     return new Promise(resolve => {
-      this.base = new THREE.Mesh(
-        new THREE.SphereGeometry(1),
-        new THREE.MeshBasicMaterial({ wireframe: true })
-      )
+      // this.base = new THREE.Mesh(
+      //   new THREE.SphereGeometry(1),
+      //   new THREE.MeshBasicMaterial({ wireframe: true })
+      // )
       scene.add(this.base)
       this.base.scale.setScalar(this.SPHERE_SCALE)
 
       this.base.add(this.anchor)
       this.anchor.scale.setScalar(0.06)
-      this.anchor.position.set(1, 0, -1)
+      this.anchor.position.set(0, 1, -1)
       // plane
       const head = new THREE.Mesh(
         new THREE.SphereGeometry(1, 12, 6, 0, Math.PI).translate(0, 0, -0.5),
@@ -68,9 +71,16 @@ export default class Arm {
       )
       tailWingV.position.set(0, 0.32, -3.1)
 
-
-
       this.anchor.add(head, body, rightWing, leftWing, tailWingH, tailWingV)
+
+      // for collision
+      this.headBox = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshBasicMaterial({ wireframe: true, transparent: true, opacity: 0})
+      )
+      this.headBox.scale.setScalar(0.5)
+      this.headBox.position.z = 2.5
+      head.add(this.headBox)
 
       // texture
       this.material = new THREE.MeshBasicMaterial({ color: 'white'})
@@ -79,6 +89,7 @@ export default class Arm {
         this.material.map = tex
         this.material.needsUpdate = true
       })
+      
       // model
       gLoader.load('arm.glb', gltf => {
         this.model = gltf.scene
@@ -136,26 +147,29 @@ export default class Arm {
     })
   }
 
-  fly(delta, rockPos) {
-    this.planeTheta += delta
+  fly(delta) {
+    this.planeTheta += delta * 3
 
-    const nextPos = new THREE.Vector3(Math.cos(this.planeTheta), 0, Math.sin(this.planeTheta))
+    const nextPos = new THREE.Vector3(0, Math.cos(this.planeTheta), Math.sin(this.planeTheta),)
     // 回転軸=sin180度を過ぎると -1 にする
     const axis = new THREE.Vector3().crossVectors(this.initialVector, nextPos).normalize()
+
     // angle=initialVector(原点から最初の位置)と原点から現在の位置のvectorsのなす角 (0 ~ Math.PI ~ 0)
     const angle = Math.acos(this.initialVector.clone().dot(nextPos))
     
     this.anchor.position.copy(nextPos)
     this.anchor.setRotationFromAxisAngle(axis, angle)
-
-    const rockPosVector = new THREE.Vector2(rockPos.x, rockPos.y).normalize()
-    const baseAngle = Math.acos(rockPosVector.dot(new THREE.Vector2(1, 0)))
-
-    this.base.rotation.z = baseAngle
     
+    this.rotateBase(delta)
+  }
 
+  rotateBase(delta) {
+    const lerpedRot = this.base.rotation.z + (this.destRotZ - this.base.rotation.z) * delta * 2
+    this.base.rotation.z = lerpedRot
 
-
+    if(Math.abs(this.base.rotation.z  - this.destRotZ) < 0.1) {
+      this.destRotZ = Math.random() * Math.PI * 2
+    }
   }
 
   seize(delta) {
@@ -170,12 +184,19 @@ export default class Arm {
 
     if (this.armTheta > this.stopArmTheta) {
       this.armTheta = 0
-      this.time = 0
-      this.claws.forEach(claw => {
-        claw.setRotationFromEuler(claw.userData.initialRot)
-      })
+
+      globalState.setStatus('caught')
     }
-  
+  }
+
+  reset() {
+    this.claws.forEach(claw => {
+      claw.setRotationFromEuler(claw.userData.initialRot)
+    })
+
+    this.anchor.position.set(0, 1, -1)
+    this.anchor.rotation.y = 0
+    this.base.rotation.z = 0
   }
 
 }

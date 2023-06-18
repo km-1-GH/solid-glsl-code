@@ -15,7 +15,7 @@ export default class CreateMesh {
     this.SPHERE_SCALE = {
       earth: 4,
       armBase: 5,
-      rockBase: 5
+      rockBase: 4.9
     }
 
     this.setLoader()
@@ -23,12 +23,12 @@ export default class CreateMesh {
   }
 
   setLoader() {
-    this.mananer = new THREE.LoadingManager(
+    this.manager = new THREE.LoadingManager(
       () => {
         console.log('loaded');
       },
       (url, loaded, total) => {
-        console.log(`${loaded}/${total} loaded`);
+        console.log(`${loaded}/${total} loaded: ${url}`);
       }, 
       (url) => {
         console.log(url);
@@ -37,7 +37,6 @@ export default class CreateMesh {
 
     this.gLoader = new GLTFLoader(this.manager).setPath('model/')
     this.tLoader = new THREE.TextureLoader(this.manager).setPath('texture/')
-
   }
 
   create(scene) {
@@ -57,9 +56,9 @@ export default class CreateMesh {
       Promise.all([
         pArm,
         pEarth,
+        pRock
         
       ]).then(() => {
-        console.log(this.items)
         resolve()
       })
     })
