@@ -20,10 +20,15 @@ export function dev(base, items) {
     base.renderer.setClearColor(value)
   })
 
+  // directional light position
+  gui.add(items.directionalLight.position, 'x', -1, 1, 0.0001).name('dirLightX')
+  gui.add(items.directionalLight.position, 'y', -1, 1, 0.0001).name('dirLightY')
+  gui.add(items.directionalLight.position, 'z', -1, 1, 0.0001).name('dirLightZ')
+
   // point light position
-  gui.add(items.pointLight1.position, 'x', -10, 10, 0.001).name('lightPos.x')
-  gui.add(items.pointLight1.position, 'y', -3, 10, 0.001).name('lightPos.y')
-  gui.add(items.pointLight1.position, 'z', -30, 20, 0.001).name('lightPos.z')
+  // gui.add(items.pointLight1.position, 'x', -10, 10, 0.001).name('lightPos.x')
+  // gui.add(items.pointLight1.position, 'y', -3, 10, 0.001).name('lightPos.y')
+  // gui.add(items.pointLight1.position, 'z', -30, 20, 0.001).name('lightPos.z')
 
 
 

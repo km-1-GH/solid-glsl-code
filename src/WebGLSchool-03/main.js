@@ -62,6 +62,7 @@ function render() {
   delta = Math.max(0, Math.min(delta, 0.2))
   currentTime = elapsed
 
+  items.arm.fly(delta, items.rock.rock.position)
   items.arm.seize(delta)
 
   // devUpdate() /////////////////dev
