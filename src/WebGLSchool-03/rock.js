@@ -31,7 +31,7 @@ export default class Rock {
   }
 
   setClickEvent() {
-    window.addEventListener('mousemove', (e) => {
+    window.addEventListener('pointermove', (e) => {
       if (globalState.status() === 'fly') {
         const screenX = (e.clientX / window.innerWidth) * 2 - 1 //-0.5 - 0.5
         const screenY = -1 * ((e.clientY / window.innerHeight) * 2 - 1)
@@ -42,16 +42,16 @@ export default class Rock {
       }
     })
 
-    window.addEventListener('touchstart', (e) => {
-      if (globalState.status() === 'fly') {
-        const screenX = (e.clientX / window.innerWidth) * 2 - 1 //-0.5 - 0.5
-        const screenY = -1 * ((e.clientY / window.innerHeight) * 2 - 1)
-        const z = 1 - Math.abs(screenX)
+    // window.addEventListener('touchstart', (e) => {
+    //   if (globalState.status() === 'fly') {
+    //     const screenX = (e.clientX / window.innerWidth) * 2 - 1 //-0.5 - 0.5
+    //     const screenY = -1 * ((e.clientY / window.innerHeight) * 2 - 1)
+    //     const z = 1 - Math.abs(screenX)
   
-        const vector = new THREE.Vector3(screenX, screenY, z).normalize()
-        this.rock.position.copy(vector)
-      }
-    })
+    //     const vector = new THREE.Vector3(screenX, screenY, z).normalize()
+    //     this.rock.position.copy(vector)
+    //   }
+    // })
   }
 
   reset() {
