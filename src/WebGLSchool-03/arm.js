@@ -35,6 +35,7 @@ export default class Arm {
       this.base.add(this.anchor)
       this.anchor.scale.setScalar(0.06)
       this.anchor.position.set(0, 1, -1)
+      this.anchor.userData.speed = 4
       // plane
       const head = new THREE.Mesh(
         new THREE.SphereGeometry(1, 12, 6, 0, Math.PI).translate(0, 0, -0.5),
@@ -148,7 +149,7 @@ export default class Arm {
   }
 
   fly(delta) {
-    this.planeTheta += delta * 3
+    this.planeTheta += delta * this.anchor.userData.speed
 
     const nextPos = new THREE.Vector3(0, Math.cos(this.planeTheta), Math.sin(this.planeTheta),)
     // 回転軸=sin180度を過ぎると -1 にする

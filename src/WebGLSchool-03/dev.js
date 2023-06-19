@@ -16,6 +16,8 @@ export function dev(base, items) {
 
   gui.add(guiParam, 'resetControl').name('reset OrbitControls')
 
+  gui.add(items.arm.anchor.userData, 'speed', 1, 4, 0.01).name('Plane Speed')
+
   // clearColor
   // guiParam.clearColor = 0x000000
   // gui.addColor(guiParam, 'clearColor').onChange(value => {
