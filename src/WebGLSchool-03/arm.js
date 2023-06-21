@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import globalState from './globalState'
+import globalState from './globalState.js'
 
 export default class Arm {
   constructor(scale) {
@@ -25,10 +25,12 @@ export default class Arm {
 
   create(scene, gLoader, tLoader) {
     return new Promise(resolve => {
+
       // this.base = new THREE.Mesh(
       //   new THREE.SphereGeometry(1),
       //   new THREE.MeshBasicMaterial({ wireframe: true })
       // )
+      
       scene.add(this.base)
       this.base.scale.setScalar(this.SPHERE_SCALE)
 

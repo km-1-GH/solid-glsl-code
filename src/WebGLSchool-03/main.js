@@ -1,10 +1,13 @@
 import './style.scss'
 import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+
 import SetupTHREE from './setupTHREE.js'
-import CreateMesh from './createMesh'
+import CreateMesh from './createMesh.js'
 import globalState from './globalState.js'
 
 import { dev, devUpdate } from './dev.js'
+import { az } from '../../dist/assets/solid-d7350cca'
 
 const base = new SetupTHREE()
 const createMesh = new CreateMesh()
@@ -41,6 +44,11 @@ const CAMERA_PARAM = {
 }
 
 function init() {
+
+  // orbit controls
+  items.controls = new OrbitControls(base.camera, base.renderer.domElement)
+  
+  setClickEvent()
 
   dev(base, items)  //////////////////////////dev
 
@@ -80,6 +88,42 @@ function operation() {
   }
 }
 
+function setClickEvent() {
+  window.addEventListener('pointermove', (e) => {
+    if (globalState.status() === 'fly') {
+      // スクリーン座標から-1～1に
+      let screenX = (e.clientX / window.innerWidth) * 2 - 1
+      let screenY = -1 * ((e.clientY / window.innerHeight) * 2 - 1)
+      
+      // 後ろまでまわらないように半分にする
+      screenX *= 0.5
+      screenY *= 0.5
+      
+      let latitude = screenY * Math.PI // 緯度
+      let longitude = screenX * Math.PI // 経度
+      
+      // カメラの位置による修正 (cameraPos->(0, -0.5, 10) lookAt->(0, 0, 0))
+      latitude -= base.camera.rotation.x
+
+      // orbit controls から緯度、経度を修正
+      const polarAngle = (items.controls.getPolarAngle() - Math.PI * 0.5) //-Math.PI*0.5 ~ Math.PI*0.5 / center=0
+      const azimuthAngle = items.controls.getAzimuthalAngle() //-Math.PI ~ Math.PI / center=0
+
+      latitude += polarAngle - (polarAngle / (Math.PI * 0.5)) * Math.PI * 0.5  //polarAngleだけ足すと行き過ぎる…
+      longitude += azimuthAngle
+
+      // console.log(Math.round(polarAngle * 100) / 100, Math.round(latitude * 100) / 100, Math.round(longitude * 100) / 100);
+
+      // 緯度、経度からPositionを計算して更新
+      const x = Math.sin(longitude) * Math.cos(latitude)
+      const y = Math.sin(latitude)
+      const z = Math.cos(longitude) * Math.cos(latitude)
+
+      items.rock.rock.position.set(x, y, z)
+    }
+  })
+}
+
 function checkCollision() {
   items.rock.box3.setFromObject(items.rock.rock)
   items.arm.box3.setFromObject(items.arm.headBox)
@@ -97,6 +141,9 @@ function render() {
   delta = elapsed - currentTime
   delta = Math.max(0, Math.min(delta, 0.2))
   currentTime = elapsed
+
+  // console.log(items.controls.getAzimuthalAngle());
+  // console.log(items.controls.getPolarAngle())
 
   operation()
   base.renderer.render(base.scene, base.camera)

@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import globalState from './globalState'
+import globalState from './globalState.js'
 
 export default class Rock {
   constructor(scale) {
@@ -25,34 +25,11 @@ export default class Rock {
       this.rock.scale.setScalar(0.08)
       this.anchor.add(this.rock)
 
-      this.setClickEvent()
+      // this.setClickEvent()
       resolve()
     })
   }
 
-  setClickEvent() {
-    window.addEventListener('pointermove', (e) => {
-      if (globalState.status() === 'fly') {
-        const screenX = (e.clientX / window.innerWidth) * 2 - 1 //-0.5 - 0.5
-        const screenY = -1 * ((e.clientY / window.innerHeight) * 2 - 1)
-        const z = 1 - Math.abs(screenX)
-  
-        const vector = new THREE.Vector3(screenX, screenY, z).normalize()
-        this.rock.position.copy(vector)
-      }
-    })
-
-    // window.addEventListener('touchstart', (e) => {
-    //   if (globalState.status() === 'fly') {
-    //     const screenX = (e.clientX / window.innerWidth) * 2 - 1 //-0.5 - 0.5
-    //     const screenY = -1 * ((e.clientY / window.innerHeight) * 2 - 1)
-    //     const z = 1 - Math.abs(screenX)
-  
-    //     const vector = new THREE.Vector3(screenX, screenY, z).normalize()
-    //     this.rock.position.copy(vector)
-    //   }
-    // })
-  }
 
   reset() {
     this.rock.material.opacity = 1
