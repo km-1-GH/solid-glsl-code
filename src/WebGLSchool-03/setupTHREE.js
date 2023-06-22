@@ -19,6 +19,11 @@ export default class SetupTHREE {
       antialias: true,
       alpha: true,
     })
+    
+      // enable shadow map
+      this.renderer.shadowMap.enabled = true
+      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+
     this.renderer.setClearColor(new THREE.Color(RENDER_PARAM.clearColor))
     this.renderer.setSize(window.innerWidth, window.innerHeight)
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))

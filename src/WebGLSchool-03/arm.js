@@ -30,20 +30,22 @@ export default class Arm {
       //   new THREE.SphereGeometry(1),
       //   new THREE.MeshBasicMaterial({ wireframe: true })
       // )
-      
-      scene.add(this.base)
-      this.base.scale.setScalar(this.SPHERE_SCALE)
+      // scene.add(this.base)
 
+      this.base.scale.setScalar(this.SPHERE_SCALE)
       this.base.add(this.anchor)
-      this.anchor.scale.setScalar(0.06)
+
+      this.anchor.scale.setScalar(0.03)
       this.anchor.position.set(0, 1, -1)
-      this.anchor.userData.speed = 4
+      this.anchor.userData.speed = 1.66
+
       // plane
       const head = new THREE.Mesh(
         new THREE.SphereGeometry(1, 12, 6, 0, Math.PI).translate(0, 0, -0.5),
         new THREE
         .MeshToonMaterial({ color: 0xffffd1 })
       )
+
       const body = new THREE.Mesh(
         new THREE.CylinderGeometry(1, 0.4, 3.6, 12, 1).translate(0, 3.6 * -0.5 - 0.5, 0),
         new THREE.MeshToonMaterial({ color: 0xffff9e })
@@ -75,6 +77,14 @@ export default class Arm {
       tailWingV.position.set(0, 0.32, -3.1)
 
       this.anchor.add(head, body, rightWing, leftWing, tailWingH, tailWingV)
+
+      // cast shadow
+      head.castShadow = true
+      body.castShadow = true
+      rightWing.castShadow = true
+      leftWing.castShadow = true
+      tailWingH.castShadow = true
+      tailWingV.castShadow = true
 
       // for collision
       this.headBox = new THREE.Mesh(
@@ -197,6 +207,7 @@ export default class Arm {
       claw.setRotationFromEuler(claw.userData.initialRot)
     })
 
+    this.planeTheta = 0
     this.anchor.position.set(0, 1, -1)
     this.anchor.rotation.y = 0
     this.base.rotation.z = 0

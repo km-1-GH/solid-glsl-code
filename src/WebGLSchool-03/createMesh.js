@@ -14,8 +14,8 @@ export default class CreateMesh {
 
     this.SPHERE_SCALE = {
       earth: 4,
-      armBase: 5,
-      rockBase: 4.9
+      armBase: 5 / 4,
+      rockBase: 4.9 / 4
     }
 
     this.setLoader()
@@ -59,6 +59,8 @@ export default class CreateMesh {
         pRock
         
       ]).then(() => {
+        this.items.earth.anchor.add(this.items.rock.anchor)
+        this.items.earth.anchor.add(this.items.arm.base)
         resolve()
       })
     })
@@ -71,16 +73,19 @@ export default class CreateMesh {
   createLights(scene) {
     // directional light
     this.items.directionalLight = new THREE.DirectionalLight(0xffffff,1)
-    this.items.directionalLight.position.set(0.41, 0.41, 0.312)
-    scene.add(this.items.directionalLight)
+    this.items.directionalLight.position.set(-3, 3, 3)
 
-    // point light
-    // this.items.pointLight1 = new THREE.PointLight(0xffffff, 2, 20)
-    // this.items.pointLight1.position.set(1, 2, 2)
-    // scene.add(this.items.pointLight1)
+        // enable cast shadow
+        this.items.directionalLight.castShadow = true
+        this.items.directionalLight.shadow.camera.near = 1
+        this.items.directionalLight.shadow.camera.far = 15
+    
+    scene.add(this.items.directionalLight)
 
     // ambient light
     this.items.ambientLight = new THREE.AmbientLight(0x777777, 0.4)
     scene.add(this.items.ambientLight)
+
+
   }
 }

@@ -22,8 +22,13 @@ export default class Earth {
         new THREE.SphereGeometry(1),
         new THREE.MeshToonMaterial({ color: 0x68e23 })
       )
-      scene.add(this.anchor)
       this.anchor.scale.setScalar(this.SPHERE_SCALE)
+      this.anchor.position.set(2.4, 1.2, -1)
+
+            // enable receive shadow
+            this.anchor.receiveShadow = true
+
+      scene.add(this.anchor)
 
       // buildings
       this.cityAddress.forEach(address => {
@@ -51,22 +56,13 @@ export default class Earth {
       const verticalLine = new THREE.Mesh(verticalG, verticalM)
       this.anchor.add(verticalLine)
 
-      const north = new THREE.Mesh(
-        new THREE.SphereGeometry(1, 32, 4, 0, Math.PI * 2, 0, 0.4),
-        new THREE.MeshToonMaterial({ color: 'navy' })
-      )
-      north.scale.setScalar(1.01)
-      this.anchor.add(north)
-
-      const south = new THREE.Mesh(
-        new THREE.SphereGeometry(1, 32, 4, 0, Math.PI * 2, 2.74, 0.4),
-        new THREE.MeshToonMaterial({ color: 'ivory' })
-      )
-      south.scale.setScalar(1.01)
-      this.anchor.add(south)
-
       resolve()
     })
+  }
+
+  updateRot(delta) {
+    this.anchor.rotation.x += delta * 0.1
+    this.anchor.rotation.z += delta * 0.07
   }
 
 }
