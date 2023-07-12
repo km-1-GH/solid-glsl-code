@@ -2,7 +2,7 @@ import vs from './shader/star.vert?raw'
 import fs from './shader/star.frag?raw'
 
 const offsetTheta = Math.PI * 0.5
-const R = 0.4
+const R = 0.2
 
 const positions = []
 const posStride = 3

@@ -38,41 +38,46 @@ window.addEventListener('DOMContentLoaded', () => {
               //   });
               // }
   .then(() => {
-    // ジオメトリセットアップ
-    app.setupGeometry();
-              // setupGeometry() {
-              //   this.position = [
-              //      0.0,  0.5,  0.0, // ひとつ目の頂点の x, y, z 座標
-              //      0.5, -0.5,  0.0, // ふたつ目の頂点の x, y, z 座標
-              //     -0.5, -0.5,  0.0, // みっつ目の頂点の x, y, z 座標
-              //   ];
-              //   this.positionStride = 3;
-              //   this.positionVBO = WebGLUtility.createVBO(this.gl, this.position);
+    // シェーダーオブジェクト作成、ジオメトリセットアップ、プログラムオブジェクトの作成
+    app.createProgram()
+
+    // ジオメトリセットアップとロケーションセットアップ
+    app.setupMesh()
+    // // ジオメトリセットアップ
+    // app.setupGeometry();
+    //           // setupGeometry() {
+    //           //   this.position = [
+    //           //      0.0,  0.5,  0.0, // ひとつ目の頂点の x, y, z 座標
+    //           //      0.5, -0.5,  0.0, // ふたつ目の頂点の x, y, z 座標
+    //           //     -0.5, -0.5,  0.0, // みっつ目の頂点の x, y, z 座標
+    //           //   ];
+    //           //   this.positionStride = 3;
+    //           //   this.positionVBO = WebGLUtility.createVBO(this.gl, this.position);
             
-              //   this.color = [
-              //     1.0, 0.0, 0.0, 1.0, // ひとつ目の頂点の r, g, b, a カラー
-              //     0.0, 1.0, 0.0, 1.0, // ふたつ目の頂点の r, g, b, a カラー
-              //     0.0, 0.0, 1.0, 1.0, // みっつ目の頂点の r, g, b, a カラー
-              //   ];
-              //   this.colorStride = 4;
-              //   this.colorVBO = WebGLUtility.createVBO(this.gl, this.color);
-              // }
+    //           //   this.color = [
+    //           //     1.0, 0.0, 0.0, 1.0, // ひとつ目の頂点の r, g, b, a カラー
+    //           //     0.0, 1.0, 0.0, 1.0, // ふたつ目の頂点の r, g, b, a カラー
+    //           //     0.0, 0.0, 1.0, 1.0, // みっつ目の頂点の r, g, b, a カラー
+    //           //   ];
+    //           //   this.colorStride = 4;
+    //           //   this.colorVBO = WebGLUtility.createVBO(this.gl, this.color);
+    //           // }
 
-    // ロケーションのセットアップ
-    app.setupLocation();
-              // setupLocation() {
-              //   const gl = this.gl;
+    // // ロケーションのセットアップ
+    // app.setupLocation();
+    //           // setupLocation() {
+    //           //   const gl = this.gl;
 
-              //   const attPosition = gl.getAttribLocation(this.program, 'position');
-              //   const attColor = gl.getAttribLocation(this.program, 'color');
+    //           //   const attPosition = gl.getAttribLocation(this.program, 'position');
+    //           //   const attColor = gl.getAttribLocation(this.program, 'color');
 
-              //   WebGLUtility.enableAttribute(gl, this.positionVBO, attPosition, this.positionStride);
-              //   WebGLUtility.enableAttribute(gl, this.colorVBO, attColor, this.colorStride);
-              //   // uniform location の取得
-              //   this.uniformLocation = {
-              //     time: gl.getUniformLocation(this.program, 'time'),
-              //   };
-              // }
+    //           //   WebGLUtility.enableAttribute(gl, this.positionVBO, attPosition, this.positionStride);
+    //           //   WebGLUtility.enableAttribute(gl, this.colorVBO, attColor, this.colorStride);
+    //           //   // uniform location の取得
+    //           //   this.uniformLocation = {
+    //           //     time: gl.getUniformLocation(this.program, 'time'),
+    //           //   };
+    //           // }
   
     // セットアップが完了したら描画を開始する
     app.setupGUI()

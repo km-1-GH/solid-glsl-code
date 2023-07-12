@@ -1,6 +1,7 @@
 // モジュールを読み込み
 import { WebGLUtility } from './webglUtility.js';
 import * as star from './star.js'
+import * as pentagon from './pentagon.js'
 import GUI from 'lil-gui'
 
 /**
@@ -26,41 +27,49 @@ export default class App {
      * @type {WebGLProgram}
      */
     this.program = null;
+    this.program_penta = null;
     /**
      * uniform 変数のロケーションを保持するオブジェクト
      * @type {object.<WebGLUniformLocation>}
      */
     this.uniformLocation = null;
+    this.uniformLocation_penta = null;
     /**
      * 頂点の座標を格納する配列
      * @type {Array.<number>}
      */
     this.position = null;
+    this.position_penta = null;
     /**
      * 頂点の座標を構成する要素数（ストライド）
      * @type {number}
      */
     this.positionStride = null;
+    this.positionStride_penta = null;
     /**
      * 座標の頂点バッファ
      * @type {WebGLBuffer}
      */
     this.positionVBO = null;
+    this.positionVBO_penta = null;
     /**
      * 頂点の色を格納する配列
      * @type {Array.<number>}
      */
     this.color = null;
+    this.color_penta = null;
     /**
      * 頂点の色を構成する要素数（ストライド）
      * @type {number}
      */
     this.colorStride = null;
+    this.colorStride_penta = null;
     /**
      * 色の頂点バッファ
      * @type {WebGLBuffer}
      */
     this.colorVBO = null;
+    this.colorVBO_penta = null;
     /**
      * レンダリング開始時のタイムスタンプ
      * @type {number}
@@ -132,116 +141,105 @@ export default class App {
    */
   load() {
     return new Promise((resolve, reject) => {
-      // 変数に WebGL コンテキストを代入しておく（コード記述の最適化）
-      const gl = this.gl;
-      // WebGL コンテキストがあるかどうか確認する
-      if (gl == null) {
-        // もし WebGL コンテキストがない場合はエラーとして Promise を reject する
-        const error = new Error('not initialized');
-        reject(error);
-      } else {
-        const starVert = WebGLUtility.createShaderObject(gl, star.vs, gl.VERTEX_SHADER);
-
-                      // static createShaderObject(gl, source, type) {
-                      //   // 空のシェーダオブジェクトを生成する
-                      //   const shader = gl.createShader(type);
-                      //   // シェーダオブジェクトにソースコードを割り当てる
-                      //   gl.shaderSource(shader, source);
-                      //   // シェーダをコンパイルする
-                      //   gl.compileShader(shader);
-                      //   // コンパイル後のステータスを確認し問題なければシェーダオブジェクトを返す
-                      //   if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                      //     return shader;
-                      //   } else {
-                      //     throw new Error(gl.getShaderInfoLog(shader));
-                      //     return null;
-                      //   }
-                      // }
-
-        const starFrag = WebGLUtility.createShaderObject(gl, star.fs, gl.FRAGMENT_SHADER);
-          // - プログラムオブジェクト -----------------------------------------
-          // WebGL では、シェーダのソースコードから「シェーダオブジェクト」を生
-          // 成しますが、このシェーダオブジェクトをリンクして、１つの整合性のあ
-          // る「シェーダプログラム」にしてやる必要があります。
-          // この「シェーダプログラム」のことを WebGL では「プログラムオブジェク
-          // ト」と呼びます。
-          // 今の段階では、とりあえずプログラムオブジェクトは１つです。
-          // 将来的には、複数のプログラムオブジェクトを取り替えながら、複数のシ
-          // ェーダプログラムを同時に走らせたりといったことも行います。
-          // ------------------------------------------------------------------
-        this.program = WebGLUtility.createProgramObject(gl, starVert, starFrag);
-
-                      // static createProgramObject(gl, vs, fs) {
-                      //   // 空のプログラムオブジェクトを生成する
-                      //   const program = gl.createProgram();
-                      //   // ２つのシェーダをアタッチ（関連付け）する
-                      //   gl.attachShader(program, vs);
-                      //   gl.attachShader(program, fs);
-                      //   // シェーダオブジェクトをリンクする
-                      //   gl.linkProgram(program);
-                      //   // リンクが完了するとシェーダオブジェクトは不要になるので削除する
-                      //   gl.deleteShader(vs);
-                      //   gl.deleteShader(fs);
-                      //   // リンク後のステータスを確認し問題なければプログラムオブジェクトを返す
-                      //   if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
-                      //     gl.useProgram(program);
-                      //     return program;
-                      //   } else {
-                      //     throw new Error(gl.getProgramInfoLog(program));
-                      //     return null;
-                      //   }
-                      // }
 
         // Promise を解決
         resolve();
-      }
-    });
+    })
   }
 
-  /**
-   * 頂点属性（頂点ジオメトリ）のセットアップを行う
-   */
-  setupGeometry() {
-  // position
+  createProgram() {
+    // 変数に WebGL コンテキストを代入しておく（コード記述の最適化）
+    const gl = this.gl;
+    // WebGL コンテキストがあるかどうか確認する
+    if (gl == null) {
+      // もし WebGL コンテキストがない場合はエラーとして Promise を reject する
+      const error = new Error('not initialized');
+      reject(error);
+    } else {
+      const starVert = WebGLUtility.createShaderObject(gl, star.vs, gl.VERTEX_SHADER);
+      const pentaVert = WebGLUtility.createShaderObject(gl, pentagon.vs, gl.VERTEX_SHADER);
+
+                    // static createShaderObject(gl, source, type) {
+                    //   // 空のシェーダオブジェクトを生成する
+                    //   const shader = gl.createShader(type);
+                    //   // シェーダオブジェクトにソースコードを割り当てる
+                    //   gl.shaderSource(shader, source);
+                    //   // シェーダをコンパイルする
+                    //   gl.compileShader(shader);
+                    //   // コンパイル後のステータスを確認し問題なければシェーダオブジェクトを返す
+                    //   if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    //     return shader;
+                    //   } else {
+                    //     throw new Error(gl.getShaderInfoLog(shader));
+                    //     return null;
+                    //   }
+                    // }
+
+      const starFrag = WebGLUtility.createShaderObject(gl, star.fs, gl.FRAGMENT_SHADER);
+      const pentaFrag = WebGLUtility.createShaderObject(gl, pentagon.fs, gl.FRAGMENT_SHADER);
+      // - プログラムオブジェクト -----------------------------------------
+      // ------------------------------------------------------------------
+      this.program = WebGLUtility.createProgramObject(gl, starVert, starFrag);
+      this.program_penta = WebGLUtility.createProgramObject(gl, pentaVert, pentaFrag);
+
+                    // static createProgramObject(gl, vs, fs) {
+                    //   // 空のプログラムオブジェクトを生成する
+                    //   const program = gl.createProgram();
+                    //   // ２つのシェーダをアタッチ（関連付け）する
+                    //   gl.attachShader(program, vs);
+                    //   gl.attachShader(program, fs);
+                    //   // シェーダオブジェクトをリンクする
+                    //   gl.linkProgram(program);
+                    //   // リンクが完了するとシェーダオブジェクトは不要になるので削除する
+                    //   gl.deleteShader(vs);
+                    //   gl.deleteShader(fs);
+                    //   // リンク後のステータスを確認し問題なければプログラムオブジェクトを返す
+                    //   if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                    //     gl.useProgram(program);
+                    //     return program;
+                    //   } else {
+                    //     throw new Error(gl.getProgramInfoLog(program));
+                    //     return null;
+                    //   }
+                    // }
+    }
+  }
+
+  setupMesh() {
+    const gl = this.gl
+    /**
+     * 頂点属性（頂点ジオメトリ）のセットアップを行う
+     */
+
+  // star
+    // position
     this.positionStride = 3;
     this.vertexCount = star.positions.length / this.positionStride
     // VBO を生成
     this.positionVBO = WebGLUtility.createVBO(this.gl, star.positions);
-
-                // static createVBO(gl, vertexArray) {
-                //   // 空のバッファオブジェクトを生成する
-                //   const vbo = gl.createBuffer();
-                //   // バッファを gl.ARRAY_BUFFER としてバインドする
-                //   gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-                //   // バインドしたバッファに Float32Array オブジェクトに変換した配列を設定する
-                //   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexArray), gl.STATIC_DRAW);
-                //   // 安全のために最後にバインドを解除してからバッファオブジェクトを返す
-                //   gl.bindBuffer(gl.ARRAY_BUFFER, null);
-                //   return vbo;
-                // }
-
-
-  // color
+    
+    // color
     this.colorStride = 4;
     // VBO を生成
     this.colorVBO = WebGLUtility.createVBO(this.gl, star.colors);
-  }
 
-  /**
-   * 頂点属性のロケーションに関するセットアップを行う
-   */
-  setupLocation() {
-    const gl = this.gl;
-    // - ロケーション ---------------------------------------------------------
-    // GPU 上で動作するプログラム（つまりシェーダ）に、正しくデータを渡してやる
-    // ために、あらかじめ「ロケーション」と呼ばれる情報を取得しておく必要があり
-    // ます。
-    // GPU 上の「参照先」や「ポインタのようなもの」と考えるとわかりやすいでしょ
-    // うか…… どこに、どの頂点属性のデータを送り込めばいいのかを関連付けしてお
-    // く作業です。
-    // ロケーションは「シェーダプログラム側の変数名」を指定することで取得するこ
-    // とができます。
-    // ------------------------------------------------------------------------
+  // pentagon
+    // position
+    this.positionStride_penta = 3;
+    this.vertexCount_penta = pentagon.positions.length / this.positionStride_penta
+    // VBO を生成
+    this.positionVBO_penta = WebGLUtility.createVBO(this.gl, pentagon.positions);
+
+    // color
+    this.colorStride_penta = 4;
+    // VBO を生成
+    this.colorVBO_penta = WebGLUtility.createVBO(this.gl, pentagon.colors);
+
+    /**
+     * 頂点属性のロケーションに関するセットアップを行う
+     */
+
+  // star
     const attPosition = gl.getAttribLocation(this.program, 'position');
     const attColor = gl.getAttribLocation(this.program, 'color');
     // attribute location の有効化
@@ -257,11 +255,23 @@ export default class App {
                 //   gl.vertexAttribPointer(attLocation, attStride, gl.FLOAT, false, 0, 0);
                 // }
 
-
     // uniform location の取得
     this.uniformLocation = {
       time: gl.getUniformLocation(this.program, 'time'),
     };
+
+  // pentagon
+    // const attPosition_penta = gl.getAttribLocation(this.program_penta, 'position');
+    // const attColor_penta = gl.getAttribLocation(this.program_penta, 'color');
+    // // attribute location の有効化
+    // WebGLUtility.enableAttribute(gl, this.positionVBO_penta, attPosition_penta, this.positionStride_penta);
+    // WebGLUtility.enableAttribute(gl, this.colorVBO_penta, attColor_penta, this.colorStride_penta);
+
+    // // uniform location の取得
+    // this.uniformLocation_penta = {
+    //   time: gl.getUniformLocation(this.program_penta, 'time'),
+    // };
+    
   }
 
   /**
@@ -270,15 +280,6 @@ export default class App {
   setupRendering() {
     const gl = this.gl;
     // - ビューポート ---------------------------------------------------------
-    // WebGL で描画を行う領域のことをビューポートと呼びます。
-    // 紛らわしいのは「canvas 要素の大きさ ＝ WebGL のビューポート」ではないとい
-    // うことです。
-    // どういうことかというと、canvas 要素というのは HTML エレメントの一種なので、
-    // 当然ですが CSS で変形させることができます。つまり、canvas の見た目上の大
-    // きさは、必ずしもレンダリングする広さと１対１の関係ではないのです。
-    // ですから、WebGL 側ではどのような大きさのビューポートを利用したいのか別途
-    // 指定しておかなくてはなりません。
-    // ------------------------------------------------------------------------
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     // クリアする色を設定する（RGBA で 0.0 ～ 1.0 の範囲で指定する）
     gl.clearColor(0.3, 0.3, 0.3, 1.0);
@@ -332,19 +333,28 @@ export default class App {
     }
     // ビューポートの設定やクリア処理は毎フレーム呼び出す
     this.setupRendering();
+
     // 現在までの経過時間を計算し、秒単位に変換する
     this.currentTime = Date.now()
-    this.delta = Math.max(0, Math.min(0.32, this.currentTime - this.startTime))
+    this.delta = Math.max(0, Math.min(0.032, (this.currentTime - this.startTime) / 1000))
     this.elapsedTime += this.delta
-
+    this.startTime = this.currentTime
 
     // プログラムオブジェクトを選択
     gl.useProgram(this.program);
     // ロケーションを指定して、uniform 変数の値を更新する（GPU に送る）
-    gl.uniform1f(this.uniformLocation.time, this.elapsedTime * 0.1);
+    gl.uniform1f(this.uniformLocation.time, this.elapsedTime);
     // ドローコール（描画命令）
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount);
                 // https://developer.mozilla.org/ja/docs/Web/API/WebGLRenderingContext/drawArrays
+
+    // // プログラムオブジェクトを選択
+    // gl.useProgram(this.program_penta);
+    // // ロケーションを指定して、uniform 変数の値を更新する（GPU に送る）
+    // gl.uniform1f(this.uniformLocation_penta.time, this.elapsedTime);
+    // // ドローコール（描画命令）
+    // gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount_penta);
+    //             // https://developer.mozilla.org/ja/docs/Web/API/WebGLRenderingContext/drawArrays
   }
 }
 

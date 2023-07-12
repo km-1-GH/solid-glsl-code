@@ -4,6 +4,30 @@
  * @class
  */
 export class WebGLUtility {
+  /**
+   * ファイルをプレーンテキストとして読み込む
+   * @static
+   * @param {string} path - 読み込むファイルのパス
+   * @return {Promise}
+   */
+  static loadFile(path) {
+    return new Promise((resolve, reject) => {
+      // fetch を使ってファイルにアクセスする
+      fetch(path)
+      .then((res) => {
+        // テキストとして処理する
+        return res.text();
+      })
+      .then((text) => {
+        // テキストを引数に Promise を解決する
+        resolve(text);
+      })
+      .catch((err) => {
+        // なんらかのエラー
+        reject(err);
+      });
+    });
+  }
 
   /**
    * canvas を受け取り WebGL コンテキストを初期化する
