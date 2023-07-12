@@ -1,4 +1,5 @@
 import App from './webglScript.js'
+import './style.scss'
 
 // ドキュメントの読み込みが完了したら実行されるようイベントを設定する
 window.addEventListener('DOMContentLoaded', () => {
@@ -74,6 +75,7 @@ window.addEventListener('DOMContentLoaded', () => {
               // }
   
     // セットアップが完了したら描画を開始する
+    app.setupGUI()
     app.start();
               // start() {
               //   this.startTime = Date.now();

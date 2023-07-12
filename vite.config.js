@@ -21,5 +21,5 @@ export default defineConfig({
       },
     },
   },
-  base: '/solid-glsl'
+  base: '/solid-glsl',
 });

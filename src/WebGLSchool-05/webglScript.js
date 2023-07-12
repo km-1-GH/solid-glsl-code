@@ -1,7 +1,7 @@
 // モジュールを読み込み
 import { WebGLUtility } from './webglUtility.js';
-import vertexShader from './shader/main.vert?raw'
-import fragmentShader from './shader/main.frag?raw'
+import * as star from './star.js'
+import GUI from 'lil-gui'
 
 /**
  * アプリケーション管理クラス
@@ -65,7 +65,10 @@ export default class App {
      * レンダリング開始時のタイムスタンプ
      * @type {number}
      */
-    this.startTime = null;
+    this.startTime = 0
+    this.currentTime = 0
+    this.elapsedTime = 0
+    this.delta = 0
     /**
      * レンダリングを行うかどうかのフラグ
      * @type {boolean}
@@ -74,12 +77,20 @@ export default class App {
 
     // this を固定するためのバインド処理
     this.render = this.render.bind(this);
+
+    /* 
+    * GUI
+    */
+    this.guiParam = {}
   }
 
   /**
    * 初期化処理を行う
    */
   init() {
+    // レンダリング開始時のタイムスタンプを取得しておく
+    this.startTime = Date.now();
+
     // - WebGL コンテキストを初期化する ---------------------------------------
     // WebGL の様々な命令や設定値は WebGLRenderingContext という正式名称で、HTML
     // の canvas 要素から getContext('webgl') のようにメソッドを呼びだすことで取
@@ -129,7 +140,7 @@ export default class App {
         const error = new Error('not initialized');
         reject(error);
       } else {
-        let vs = WebGLUtility.createShaderObject(gl, vertexShader, gl.VERTEX_SHADER);
+        const starVert = WebGLUtility.createShaderObject(gl, star.vs, gl.VERTEX_SHADER);
 
                       // static createShaderObject(gl, source, type) {
                       //   // 空のシェーダオブジェクトを生成する
@@ -147,7 +158,7 @@ export default class App {
                       //   }
                       // }
 
-        let fs = WebGLUtility.createShaderObject(gl, fragmentShader, gl.FRAGMENT_SHADER);
+        const starFrag = WebGLUtility.createShaderObject(gl, star.fs, gl.FRAGMENT_SHADER);
           // - プログラムオブジェクト -----------------------------------------
           // WebGL では、シェーダのソースコードから「シェーダオブジェクト」を生
           // 成しますが、このシェーダオブジェクトをリンクして、１つの整合性のあ
@@ -158,7 +169,7 @@ export default class App {
           // 将来的には、複数のプログラムオブジェクトを取り替えながら、複数のシ
           // ェーダプログラムを同時に走らせたりといったことも行います。
           // ------------------------------------------------------------------
-        this.program = WebGLUtility.createProgramObject(gl, vs, fs);
+        this.program = WebGLUtility.createProgramObject(gl, starVert, starFrag);
 
                       // static createProgramObject(gl, vs, fs) {
                       //   // 空のプログラムオブジェクトを生成する
@@ -191,16 +202,11 @@ export default class App {
    * 頂点属性（頂点ジオメトリ）のセットアップを行う
    */
   setupGeometry() {
-    // 頂点座標の定義
-    this.position = [
-       0.0,  0.5,  0.0, // ひとつ目の頂点の x, y, z 座標
-       0.5, -0.5,  0.0, // ふたつ目の頂点の x, y, z 座標
-      -0.5, -0.5,  0.0, // みっつ目の頂点の x, y, z 座標
-    ];
-    // 要素数は XYZ の３つ
+  // position
     this.positionStride = 3;
+    this.vertexCount = star.positions.length / this.positionStride
     // VBO を生成
-    this.positionVBO = WebGLUtility.createVBO(this.gl, this.position);
+    this.positionVBO = WebGLUtility.createVBO(this.gl, star.positions);
 
                 // static createVBO(gl, vertexArray) {
                 //   // 空のバッファオブジェクトを生成する
@@ -215,16 +221,10 @@ export default class App {
                 // }
 
 
-    // 頂点の色の定義
-    this.color = [
-      1.0, 0.0, 0.0, 1.0, // ひとつ目の頂点の r, g, b, a カラー
-      0.0, 1.0, 0.0, 1.0, // ふたつ目の頂点の r, g, b, a カラー
-      0.0, 0.0, 1.0, 1.0, // みっつ目の頂点の r, g, b, a カラー
-    ];
-    // 要素数は RGBA の４つ
+  // color
     this.colorStride = 4;
     // VBO を生成
-    this.colorVBO = WebGLUtility.createVBO(this.gl, this.color);
+    this.colorVBO = WebGLUtility.createVBO(this.gl, star.colors);
   }
 
   /**
@@ -286,12 +286,27 @@ export default class App {
     gl.clear(gl.COLOR_BUFFER_BIT);
   }
 
+    /**
+   * GUI
+   */
+  setupGUI() {
+    const gui = new GUI
+    const guiParam = {}
+
+    guiParam.toggleRender = () => {
+      this.isRender = !this.isRender
+      if (this.isRender) {
+        this.start()
+      }
+    }
+
+    gui.add(guiParam, 'toggleRender')
+  }
+
   /**
    * 描画を開始する
    */
   start() {
-    // レンダリング開始時のタイムスタンプを取得しておく
-    this.startTime = Date.now();
     // レンダリングを行っているフラグを立てておく
     this.isRender = true;
     // レンダリングの開始
@@ -318,14 +333,17 @@ export default class App {
     // ビューポートの設定やクリア処理は毎フレーム呼び出す
     this.setupRendering();
     // 現在までの経過時間を計算し、秒単位に変換する
-    const nowTime = (Date.now() - this.startTime) * 0.001;
+    this.currentTime = Date.now()
+    this.delta = Math.max(0, Math.min(0.32, this.currentTime - this.startTime))
+    this.elapsedTime += this.delta
+
+
     // プログラムオブジェクトを選択
     gl.useProgram(this.program);
-
     // ロケーションを指定して、uniform 変数の値を更新する（GPU に送る）
-    gl.uniform1f(this.uniformLocation.time, nowTime);
+    gl.uniform1f(this.uniformLocation.time, this.elapsedTime * 0.1);
     // ドローコール（描画命令）
-    gl.drawArrays(gl.TRIANGLES, 0, this.position.length / this.positionStride);
+    gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount);
                 // https://developer.mozilla.org/ja/docs/Web/API/WebGLRenderingContext/drawArrays
   }
 }
