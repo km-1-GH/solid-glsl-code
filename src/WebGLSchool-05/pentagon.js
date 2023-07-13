@@ -1,8 +1,9 @@
-import vs from './shader/star.vert?raw'
-import fs from './shader/star.frag?raw'
+import vs from './shader/penta.vert?raw'
+import fs from './shader/penta.frag?raw'
 
 const offsetTheta = Math.PI * 0.5
 const R = 0.2
+const offsetX = 0.25
 
 const positions = []
 const posStride = 3
@@ -15,9 +16,9 @@ for (let i = 0; i < 5; i++) {
     const nextTheta = offsetTheta + (360 / 5) / 180 * Math.PI * (i + 1)
 
     // triangle
-    const vert1 = [0, 0, 0]
-    const vert2 = [Math.cos(theta) * R, Math.sin(theta) * R, 0]
-    const vert3 = [Math.cos(nextTheta) * R, Math.sin(nextTheta) * R, 0]
+    const vert1 = [0 + offsetX, 0, 0]
+    const vert2 = [Math.cos(theta) * R + offsetX, Math.sin(theta) * R, 0]
+    const vert3 = [Math.cos(nextTheta) * R + offsetX, Math.sin(nextTheta) * R, 0]
 
     positions.push(...vert1, ...vert2, ...vert3)
   

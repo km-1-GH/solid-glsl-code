@@ -91,6 +91,15 @@ export default class App {
     * GUI
     */
     this.guiParam = {}
+
+    /* 
+    * (追加) ロケーション
+    */
+    this.attPosition = null
+    this.attColor = null
+    this.attPosition_penta = null
+    this.attColor_penta = null
+
   }
 
   /**
@@ -240,11 +249,15 @@ export default class App {
      */
 
   // star
-    const attPosition = gl.getAttribLocation(this.program, 'position');
-    const attColor = gl.getAttribLocation(this.program, 'color');
+    // this.attPosition = gl.getAttribLocation(this.program, 'position');
+    // this.attColor = gl.getAttribLocation(this.program, 'color');
+
+    this.attPosition = 0
+    this.attColor = 1
+
     // attribute location の有効化
-    WebGLUtility.enableAttribute(gl, this.positionVBO, attPosition, this.positionStride);
-    WebGLUtility.enableAttribute(gl, this.colorVBO, attColor, this.colorStride);
+    WebGLUtility.enableAttribute(gl, this.positionVBO, this.attPosition, this.positionStride);
+    WebGLUtility.enableAttribute(gl, this.colorVBO, this.attColor, this.colorStride);
 
                 // static enableAttribute(gl, vbo, attLocation, attStride) {
                 //   // 有効化したいバッファをまずバインドする
@@ -261,17 +274,17 @@ export default class App {
     };
 
   // pentagon
-    // const attPosition_penta = gl.getAttribLocation(this.program_penta, 'position');
-    // const attColor_penta = gl.getAttribLocation(this.program_penta, 'color');
-    // // attribute location の有効化
-    // WebGLUtility.enableAttribute(gl, this.positionVBO_penta, attPosition_penta, this.positionStride_penta);
-    // WebGLUtility.enableAttribute(gl, this.colorVBO_penta, attColor_penta, this.colorStride_penta);
+    // this.attPosition_penta = gl.getAttribLocation(this.program_penta, 'position');
+    // this.attColor_penta = gl.getAttribLocation(this.program_penta, 'color');
+    // attribute location の有効化
+    WebGLUtility.enableAttribute(gl, this.positionVBO_penta, this.attPosition, this.positionStride_penta);
+    WebGLUtility.enableAttribute(gl, this.colorVBO_penta, this.attColor, this.colorStride_penta);
 
-    // // uniform location の取得
-    // this.uniformLocation_penta = {
-    //   time: gl.getUniformLocation(this.program_penta, 'time'),
-    // };
-    
+    // uniform location の取得
+    this.uniformLocation_penta = {
+      time: gl.getUniformLocation(this.program_penta, 'time'),
+    };
+
   }
 
   /**
@@ -344,17 +357,23 @@ export default class App {
     gl.useProgram(this.program);
     // ロケーションを指定して、uniform 変数の値を更新する（GPU に送る）
     gl.uniform1f(this.uniformLocation.time, this.elapsedTime);
+
+    WebGLUtility.enableAttribute(gl, this.positionVBO, this.attPosition, this.positionStride);
+    WebGLUtility.enableAttribute(gl, this.colorVBO, this.attColor, this.colorStride);
+
     // ドローコール（描画命令）
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount);
-                // https://developer.mozilla.org/ja/docs/Web/API/WebGLRenderingContext/drawArrays
 
-    // // プログラムオブジェクトを選択
-    // gl.useProgram(this.program_penta);
-    // // ロケーションを指定して、uniform 変数の値を更新する（GPU に送る）
-    // gl.uniform1f(this.uniformLocation_penta.time, this.elapsedTime);
-    // // ドローコール（描画命令）
-    // gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount_penta);
-    //             // https://developer.mozilla.org/ja/docs/Web/API/WebGLRenderingContext/drawArrays
+    // プログラムオブジェクトを選択
+    gl.useProgram(this.program_penta);
+    // ロケーションを指定して、uniform 変数の値を更新する（GPU に送る）
+    gl.uniform1f(this.uniformLocation_penta.time, this.elapsedTime);
+
+    WebGLUtility.enableAttribute(gl, this.positionVBO_penta, this.attPosition, this.positionStride_penta);
+    WebGLUtility.enableAttribute(gl, this.colorVBO_penta, this.attColor, this.colorStride_penta);
+
+    // ドローコール（描画命令）
+    gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount_penta);
   }
 }
 
