@@ -79,6 +79,8 @@ window.addEventListener('DOMContentLoaded', () => {
     //           //   };
     //           // }
   
+    app.setBlending(true);
+
     // セットアップが完了したら描画を開始する
     app.setupGUI()
     app.start();

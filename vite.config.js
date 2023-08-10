@@ -18,6 +18,7 @@ export default defineConfig({
         webgl02: 'WebGLSchool-02.html',
         webgl03: 'WebGLSchool-03.html',
         webgl05: 'WebGLSchool-05.html',
+        webgl06: 'WebGLSchool-06.html',
       },
     },
   },

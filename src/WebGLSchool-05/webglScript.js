@@ -249,11 +249,8 @@ export default class App {
      */
 
   // star
-    // this.attPosition = gl.getAttribLocation(this.program, 'position');
-    // this.attColor = gl.getAttribLocation(this.program, 'color');
-
-    this.attPosition = 0
-    this.attColor = 1
+    this.attPosition = gl.getAttribLocation(this.program, 'position');
+    this.attColor = gl.getAttribLocation(this.program, 'color');
 
     // attribute location の有効化
     WebGLUtility.enableAttribute(gl, this.positionVBO, this.attPosition, this.positionStride);
@@ -274,18 +271,32 @@ export default class App {
     };
 
   // pentagon
-    // this.attPosition_penta = gl.getAttribLocation(this.program_penta, 'position');
-    // this.attColor_penta = gl.getAttribLocation(this.program_penta, 'color');
+    this.attPosition_penta = gl.getAttribLocation(this.program_penta, 'position');
+    this.attColor_penta = gl.getAttribLocation(this.program_penta, 'color');
     // attribute location の有効化
-    WebGLUtility.enableAttribute(gl, this.positionVBO_penta, this.attPosition, this.positionStride_penta);
-    WebGLUtility.enableAttribute(gl, this.colorVBO_penta, this.attColor, this.colorStride_penta);
+    WebGLUtility.enableAttribute(gl, this.positionVBO_penta, this.attPosition_penta, this.positionStride_penta);
+    WebGLUtility.enableAttribute(gl, this.colorVBO_penta, this.attColor_penta, this.colorStride_penta);
 
     // uniform location の取得
     this.uniformLocation_penta = {
       time: gl.getUniformLocation(this.program_penta, 'time'),
     };
-
   }
+
+  /**
+ * ブレンディングを設定する @@@
+ * @param {boolean} flag - 設定する値
+ */
+  setBlending(flag) {
+    const gl = this.gl;
+    if (gl == null) {return;}
+    if (flag === true) {
+      gl.enable(gl.BLEND);
+    } else {
+      gl.disable(gl.BLEND);
+    }
+  }
+
 
   /**
    * レンダリングのためのセットアップを行う
@@ -298,6 +309,12 @@ export default class App {
     gl.clearColor(0.3, 0.3, 0.3, 1.0);
     // 実際にクリアする（gl.COLOR_BUFFER_BIT で色をクリアしろ、という指定になる）
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+        // ブレンドの設定 @@@
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE);
+        // その他の設定例（加算合成＋アルファで透明）
+        // gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ONE, gl.ONE);
+    
   }
 
     /**
@@ -369,8 +386,8 @@ export default class App {
     // ロケーションを指定して、uniform 変数の値を更新する（GPU に送る）
     gl.uniform1f(this.uniformLocation_penta.time, this.elapsedTime);
 
-    WebGLUtility.enableAttribute(gl, this.positionVBO_penta, this.attPosition, this.positionStride_penta);
-    WebGLUtility.enableAttribute(gl, this.colorVBO_penta, this.attColor, this.colorStride_penta);
+    WebGLUtility.enableAttribute(gl, this.positionVBO_penta, this.attPosition_penta, this.positionStride_penta);
+    WebGLUtility.enableAttribute(gl, this.colorVBO_penta, this.attColor_penta, this.colorStride_penta);
 
     // ドローコール（描画命令）
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount_penta);

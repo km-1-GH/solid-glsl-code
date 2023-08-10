@@ -7,10 +7,10 @@ varying vec4 vColor;
 
 void main() {
   // 時間の経過からサイン波を作り、絶対値で点滅させるようにする
-  vec3 rgb = vColor.rgb * abs(cos(time));
-  float a = abs(cos(time));
-
+  // vec3 rgb = vColor.rgb * abs(cos(time));
+  // float a = abs(cos(time));
+  vec4 rgba = vColor * abs(cos(time));
   // フラグメントの色
-  gl_FragColor = vec4(rgb, a);
+  gl_FragColor = vec4(rgba);
 }
 
