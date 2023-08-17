@@ -12,10 +12,10 @@ varying vec3 vNewNormal;
 varying vec2 vUv;
 varying vec3 vPosition;
 
-// ライトベクトルはひとまず定数で定義する
-const vec3 light = vec3(1.0, 1.0, 1.0);
+// // ライトベクトルはひとまず定数で定義する
+// const vec3 light = vec3(1.0, 1.0, 1.0);
 const float PI = 3.141592653589793;
-const float loopAngle = 1.0 / 6.0;
+const float loopAngle = 1.0 / 12.0;
 
 // ランダムな数
 float rand(float n)  { return fract(sin(n) * 43758.5453123); }
@@ -31,34 +31,34 @@ void main() {
   // 法線をまず行列で変換する @@@
   vec3 newNormal = (normalMatrix * vec4(normal, 0.0)).xyz;
 
-  // ふくらみを作る(60°ごと）
-  float modulo = mod(uv.x, loopAngle) * (1.0 / loopAngle);
-  float moduloDistance = 1.0 - (distance(modulo, 0.5) * 2.0);
-  float yDistance = 1.0 - (distance(uv.y, 0.5) * 2.0);
-  moduloDistance *= yDistance;
-  moduloDistance += 0.1;
+  // ふくらみを作る(30°ごと）
+  float modulo = mod(uv.x, loopAngle) / loopAngle;
+  float inflate = sin(modulo * PI);
+  float distanceY = cos(position.y * 0.46 * PI);
+  inflate = inflate * distanceY + 0.1;
 
-  //張り具合:uTime0.8以上でパンパン, 0.4以下同じ
-  float strength = smoothstep(0.4, 0.8, uTime) * 2.0 - 1.0; //0~0.4->0.8~1 : -1~1
-  float inflate = moduloDistance * strength * 0.11;
+  // 下をすぼめる
+  float pullY = pow(1.0 - smoothstep(0.0, 1.0, distance(position.y, -1.0)), 10.0) * 0.3;
+
+  //張り具合:uTime0.8以上でパンパン, 0.6以下同じ
+  float strength = smoothstep(0.6, 0.8, uTime) * 2.0 - 1.0; //0~0.4->0.8~1 : -1~1
+  inflate *= strength * 0.12;
+  
   // 大きさXZ
-  float scaleXZ = smoothstep(0.0, 0.8, distance(0.4, uTime) * 2.0) * 0.8 + 0.2; //0.2~1.0
-  // しぼむ時の高さ補正:uTime=0.6以上無効
-  float cap = (1.0 - smoothstep(0.0, 0.6, uTime)) * 1.8; //1.8-0
-  float deflateY = map(position.y, -1.0, 1.0, 0.0, cap);
-  // しぼむ時の横シフト:uTime=0.2以上無効, uv=0.75以下で
-  float shift = (1.0 - smoothstep(0.0, 0.2, uTime)) * smoothstep(0.25, 1.0, (1.0 - uv.y)) * 0.5;
+  float scaleXZ = smoothstep(0.0, 0.9, uTime) * 0.8 + 0.2; //0.2~1.0
+
+  // しぼむ時の横シフト:uTime=0.4以下で
+  float shiftTime = (1.0 - smoothstep(0.0, 0.4, uTime)) * 1.8; //uTime=0=1,uTime=0.4=0
+  float shiftXZ = min(shiftTime, distance(position.y, -1.0));
 
   // シワ:uTime=0.6以上無効
   float random = rand(position.x * position.y) * (1.0 - smoothstep(0.2, 0.6, uTime)) * 0.04 * -1.0;
 
-  // ふくらむ
+  // vertex position update
   newPosition += normal * inflate;
-  newPosition.x *= scaleXZ + newPosition.x * random;
-  newPosition.x += shift;
-  newPosition.z *= scaleXZ + newPosition.z * random;
-  // しぼむ
-  newPosition.y = position.y - deflateY + random;
+  newPosition.x = (newPosition.x * scaleXZ - newPosition.x * random) + (shiftXZ * 0.5);
+  newPosition.z = (newPosition.z * scaleXZ - newPosition.z * random) + (shiftXZ * 0.5);
+  newPosition.y = position.y - pullY - (shiftXZ + (position.x * shiftXZ * 0.2) + (position.z * shiftXZ * 0.2) + random * 0.5);
 
   // varying
   vNewNormal = newNormal;

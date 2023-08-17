@@ -1,8 +1,8 @@
+import GUI from 'lil-gui';
 import { WebGLUtility }     from './script/webgl.js';
 import { WebGLMath }        from './script/math.js';
 import { WebGLGeometry }    from './script/geometry.js';
 import { WebGLOrbitCamera } from './script/camera.js';
-import GUI from 'lil-gui';
 
 import vertexshader from './shader/main.vert?raw'
 import fragmentshader from './shader/main.frag?raw'
@@ -158,7 +158,7 @@ class App {
   setupGeometry() {
     const color = [1.0, 1.0, 1.0, 1.0];
 
-    const row = 12
+    const row = 24
     const column = 128
     const rad = 1
 
@@ -207,7 +207,7 @@ class App {
           */    
 
     const m4 = WebGLMath.Mat4
-    this.sphereModelMatrix = m4.scale(m4.identity(), [ 1.1, 1.0, 1.1 ])
+    this.sphereModelMatrix = m4.scale(m4.identity(), [ 1.0, 1.0, 1.0 ])
 
   }
 
