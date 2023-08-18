@@ -40,10 +40,9 @@ class App {
     this.camera = null
     
     // geometry
-    this.sphereModelMatrix = null
     this.geometry = null
-    this.torusVBO = null
-    this.torusIBO = null
+    this.baloonVBO = null
+    this.balloonIBO = null
 
     this.startTime = 0
     this.isRender = false
@@ -164,51 +163,14 @@ class App {
 
     this.geometry = WebGLGeometry.sphere(row, column, rad, color)
 
-       /**
-       * 球体の頂点情報を生成する
-       * @param {number} row - 球の縦方向（緯度方向）の分割数
-       * @param {number} column - 球の横方向（経度方向）の分割数
-       * @param {number} rad - 球の半径
-       * @param {Array.<number>} color - RGBA を 0.0 から 1.0 の範囲で指定した配列
-       * @return {object}
-       * @property {Array.<number>} position - 頂点座標
-       * @property {Array.<number>} normal - 頂点法線
-       * @property {Array.<number>} color - 頂点カラー
-       * @property {Array.<number>} texCoord - テクスチャ座標
-       * @property {Array.<number>} index - 頂点インデックス（gl.TRIANGLES）
-       * @example
-       * const sphereData = WebGLGeometry.sphere(64, 64, 1.0, [1.0, 1.0, 1.0, 1.0]);
-       */
-
-    this.torusVBO = [
+    this.baloonVBO = [
       WebGLUtility.createVBO(this.gl, this.geometry.position),
       WebGLUtility.createVBO(this.gl, this.geometry.normal),
       WebGLUtility.createVBO(this.gl, this.geometry.color),
       WebGLUtility.createVBO(this.gl, this.geometry.texCoord),
-          /* 
-            static createVBO(gl, vertexArray) {
-              const vbo = gl.createBuffer();
-              gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-              gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexArray), gl.STATIC_DRAW);
-              gl.bindBuffer(gl.ARRAY_BUFFER, null);
-              return vbo;
-            }
-          */
     ]
 
-    this.torusIBO = WebGLUtility.createIBO(this.gl, this.geometry.index);
-          /* 
-            static createIBO(gl, indexArray) {
-              const ibo = gl.createBuffer();
-              gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
-              gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Int16Array(indexArray), gl.STATIC_DRAW);
-              gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-              return ibo;
-          */    
-
-    const m4 = WebGLMath.Mat4
-    this.sphereModelMatrix = m4.scale(m4.identity(), [ 1.0, 1.0, 1.0 ])
-
+    this.balloonIBO = WebGLUtility.createIBO(this.gl, this.geometry.index);
   }
 
   setupLocation() {
@@ -276,15 +238,16 @@ class App {
 
     // 現在までの経過時間 = elapsed
     const nowTime = (Date.now() - this.startTime) * 0.001;
+    const uTime = Math.abs(Math.sin(nowTime * 0.3))
 
     // レンダリングのセットアップ(画面のリサイズ(？)とクリア)
     this.setupRendering()
 
-    // 回転
-    const rotateAxis = v3.create(0.0, 1.0, 0.0)
-    // const modelMatrix = m4.rotate(m4.identity(), nowTime, rotateAxis)
-    // const modelMatrix = m4.rotate(this.sphereModelMatrix, nowTime * 0.5, rotateAxis)
-    const modelMatrix = this.sphereModelMatrix
+    // 上下移動
+    const modelMatrix = m4.translate(m4.identity(), [0.0, uTime, 0.0])
+
+    // モデル座標変換行列の、逆転置行列を生成する @@@
+    const normalMatrix = m4.transpose(m4.inverse(modelMatrix))
 
     // ビュー・プロジェクション座標変換行列
     const viewMatrix = this.camera.update()
@@ -297,35 +260,15 @@ class App {
     const vp = m4.multiply(projectionMatrix, viewMatrix)
     const mvp = m4.multiply(vp, modelMatrix)
 
-    // モデル座標変換行列の、逆転置行列を生成する @@@
-    const normalMatrix = m4.transpose(m4.inverse(modelMatrix))
-
     // プログラムオブジェクトを選択し uniform 変数を更新する @@@
     gl.useProgram(this.program)
     gl.uniformMatrix4fv(this.uniformLocation.mvpMatrix, false, mvp)
     gl.uniformMatrix4fv(this.uniformLocation.normalMatrix, false, normalMatrix)
-    gl.uniform1f(this.uniformLocation.uTime, Math.abs(Math.sin(nowTime * 0.2)))
+    gl.uniform1f(this.uniformLocation.uTime, uTime)
 
     // VBO と IBO を設定し、描画する
-    WebGLUtility.enableBuffer(gl, this.torusVBO, this.attributeLocation, this.attributeStride, this.torusIBO)
-            /* 
-                static enableBuffer(gl, vbo, attLocation, attStride, ibo) {
-                  for (let i = 0; i < vbo.length; ++i) {
-                    // 有効化したいバッファをまずバインドする
-                    gl.bindBuffer(gl.ARRAY_BUFFER, vbo[i]);
-                    // 頂点属性ロケーションの有効化を行う
-                    gl.enableVertexAttribArray(attLocation[i]);
-                    // 対象のロケーションのストライドやデータ型を設定する
-                    gl.vertexAttribPointer(attLocation[i], attStride[i], gl.FLOAT, false, 0, 0);
-                  }
-                  if (ibo != null) {
-                    // IBO が与えられている場合はバインドする
-                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
-                  }
-                }
-              
-            */    
-  gl.drawElements(gl.TRIANGLES, this.geometry.index.length, gl.UNSIGNED_SHORT, 0)
+    WebGLUtility.enableBuffer(gl, this.baloonVBO, this.attributeLocation, this.attributeStride, this.balloonIBO)
+    gl.drawElements(gl.TRIANGLES, this.geometry.index.length, gl.UNSIGNED_SHORT, 0)
 
   }
 

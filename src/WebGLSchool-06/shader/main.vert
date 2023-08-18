@@ -12,8 +12,6 @@ varying vec3 vNewNormal;
 varying vec2 vUv;
 varying vec3 vPosition;
 
-// // ライトベクトルはひとまず定数で定義する
-// const vec3 light = vec3(1.0, 1.0, 1.0);
 const float PI = 3.141592653589793;
 const float loopAngle = 1.0 / 12.0;
 
@@ -38,7 +36,7 @@ void main() {
   inflate = inflate * distanceY + 0.1;
 
   // 下をすぼめる
-  float pullY = pow(1.0 - smoothstep(0.0, 1.0, distance(position.y, -1.0)), 10.0) * 0.3;
+  float pullY = pow(1.0 - smoothstep(0.0, 1.0, distance(position.y, -1.0)), 10.0) * 0.2;
 
   //張り具合:uTime0.8以上でパンパン, 0.6以下同じ
   float strength = smoothstep(0.6, 0.8, uTime) * 2.0 - 1.0; //0~0.4->0.8~1 : -1~1
@@ -58,7 +56,7 @@ void main() {
   newPosition += normal * inflate;
   newPosition.x = (newPosition.x * scaleXZ - newPosition.x * random) + (shiftXZ * 0.5);
   newPosition.z = (newPosition.z * scaleXZ - newPosition.z * random) + (shiftXZ * 0.5);
-  newPosition.y = position.y - pullY - (shiftXZ + (position.x * shiftXZ * 0.2) + (position.z * shiftXZ * 0.2) + random * 0.5);
+  newPosition.y = position.y - pullY - (shiftXZ + (position.x * shiftXZ * 0.1) + (position.z * shiftXZ * 0.2) + random * 0.5);
 
   // varying
   vNewNormal = newNormal;
