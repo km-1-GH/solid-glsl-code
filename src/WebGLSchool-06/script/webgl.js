@@ -30,6 +30,25 @@ export class WebGLUtility {
   }
 
   /**
+   * ファイルを画像として読み込む
+   * @param {string} path - 読み込むファイルのパス
+   * @return {Promise}
+   */
+  static loadImage(path) {
+    return new Promise((resolve) => {
+      // Image オブジェクトの生成
+      const img = new Image();
+      // ロード完了を検出したいので、先にイベントを設定する
+      img.addEventListener('load', () => {
+        // 画像を引数に Promise を解決する
+        resolve(img);
+      }, false);
+      // 読み込む画像のパスを設定する
+      img.src = path;
+    });
+  }
+
+  /**
    * canvas を受け取り WebGL コンテキストを初期化する
    * @param {HTMLCanvasElement} canvas - WebGL コンテキストを取得する canvas 要素
    * @return {WebGLRenderingContext}
@@ -154,6 +173,33 @@ export class WebGLUtility {
       // IBO が与えられている場合はバインドする
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
     }
+  }
+
+  /**
+   * テクスチャ用のリソースからテクスチャを生成する
+   * @param {WebGLRenderingContext} gl - WebGL コンテキスト
+   * @param {any} resource - 画像や HTMLCanvasElement などのテクスチャ用リソース
+   * @return {WebGLTexture}
+   */
+  static createTexture(gl, resource){
+    // テクスチャオブジェクトを生成
+    const texture = gl.createTexture();
+    // アクティブなテクスチャユニット番号を指定する
+    gl.activeTexture(gl.TEXTURE0);
+    // テクスチャをアクティブなユニットにバインドする
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    // バインドしたテクスチャにデータを割り当て
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resource);
+    // ミップマップを自動生成する
+    gl.generateMipmap(gl.TEXTURE_2D);
+    // テクスチャパラメータを設定する
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    // 安全の為にテクスチャのバインドを解除してから返す
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    return texture;
   }
 }
 

@@ -303,6 +303,12 @@ export class WebGLGeometry {
     const col = [];
     const st  = [];
     const idx = [];
+
+    // balloonのAttributes
+    const fragmentCount = 12
+    // パンパンの時のNormal
+    const addNor = []
+
     for (let i = 0; i <= row; i++) {
       const r = Math.PI / row * i;
       const ry = Math.cos(r);
@@ -317,7 +323,14 @@ export class WebGLGeometry {
         pos.push(tx, ty, tz);
         nor.push(rx, ry, rz);
         col.push(color[0], color[1], color[2], color[3]);
-        st.push(1 - 1 / column * j, 1 / row * i);
+        // st.push(1 - 1 / column * j, 1 / row * i);
+        st.push(1 - 1 / column * j, 1 - (1 / row * i));
+
+        let inflateLevel = (j % (column / fragmentCount)) / (column / fragmentCount) * 2 - 1 //-1~1
+        inflateLevel = Math.sin(inflateLevel * Math.PI * 0.5)
+        const aNX = rr * Math.cos(tr + inflateLevel * Math.PI * 0.5)
+        const aNZ = rr * Math.sin(tr + inflateLevel * Math.PI * 0.5)
+        addNor.push(aNX, 0.0, aNZ)
       }
     }
     for (let i = 0; i < row; i++) {
@@ -327,7 +340,10 @@ export class WebGLGeometry {
         idx.push(r, r + column + 2, r + column + 1);
       }
     }
-    return {position: pos, normal: nor, color: col, texCoord: st, index: idx};
+    return {position: pos, normal: nor, color: col, texCoord: st, index: idx, 
+      // for balloon
+      addNor: addNor,
+    };
   }
 
   /**

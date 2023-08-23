@@ -11,12 +11,15 @@ window.addEventListener('DOMContentLoaded', () => {
   const app = new App()
   app.init()
   app.createProgramObject(vertexshader, fragmentshader)
-  app.setupGeometry()
-  app.setupLocation()
-  app.setBlending(true)
-  app.setCulling(false)
-  app.start()
+  app.load().then(() => {
+    app.setupGeometry()
+    app.setupLocation()
+    app.setBlending(true)
+    app.setCulling(false)
+    app.start()
+  })
 
+  // gui
   const gui = new GUI()
   const guiParam = {
     texture: true,
@@ -25,7 +28,6 @@ window.addEventListener('DOMContentLoaded', () => {
   gui.add(guiParam, 'blend').onChange(value => {
     app.setBlending(value);
   })
-
 });
 
 class App {
@@ -104,18 +106,6 @@ class App {
   init() {
     this.canvas = document.getElementById('webgl-canvas')
     this.gl = WebGLUtility.createWebGLContext(this.canvas)
-
-          /*  
-            static createWebGLContext(canvas) {
-              const gl = canvas.getContext('webgl');
-              if (gl == null) {
-                throw new Error('webgl not supported');
-                return null;
-              } else {
-                return gl;
-              }
-            } 
-          */
                     
     // OrbitControl Camera
     const cameraOption = {
@@ -158,7 +148,7 @@ class App {
     const color = [1.0, 1.0, 1.0, 1.0];
 
     const row = 24
-    const column = 128
+    const column = 72
     const rad = 1
 
     this.geometry = WebGLGeometry.sphere(row, column, rad, color)
@@ -167,7 +157,10 @@ class App {
       WebGLUtility.createVBO(this.gl, this.geometry.position),
       WebGLUtility.createVBO(this.gl, this.geometry.normal),
       WebGLUtility.createVBO(this.gl, this.geometry.color),
-      WebGLUtility.createVBO(this.gl, this.geometry.texCoord),
+      WebGLUtility.createVBO(this.gl, this.geometry.texCoord), //テクスチャ座標 @@@
+      // for balloon
+      WebGLUtility.createVBO(this.gl, this.geometry.addNor),
+
     ]
 
     this.balloonIBO = WebGLUtility.createIBO(this.gl, this.geometry.index);
@@ -180,20 +173,31 @@ class App {
       gl.getAttribLocation(this.program, 'position'),
       gl.getAttribLocation(this.program, 'normal'),
       gl.getAttribLocation(this.program, 'color'),
-      gl.getAttribLocation(this.program, 'uv'),
+      gl.getAttribLocation(this.program, 'uv'), // テクスチャ座標 @@@
+      // for balloon
+      gl.getAttribLocation(this.program, 'addNor'),
     ]
+
+        // ERROR: 128WebGL: INVALID_VALUE: enableVertexAttribArray: index out of range
+        console.log(this.attributeLocation);  // (5) [0, 1, 2, 3, -1] ??????????????????
+        this.attributeLocation = [0, 1, 2, 3, 4]
 
     this.attributeStride = [
       3,
       3,
       4,
       2,
+      // for balloon
+      3,
     ]
 
     this.uniformLocation = {
       mvpMatrix: gl.getUniformLocation(this.program, 'mvpMatrix'),
       normalMatrix: gl.getUniformLocation(this.program, 'normalMatrix'),
-      uTime: gl.getUniformLocation(this.program, 'uTime')
+      uTime: gl.getUniformLocation(this.program, 'uTime'),
+      normalTexUnit: gl.getUniformLocation(this.program, 'normalTexUnit'), // uniform 変数のロケーション @@@,
+      colorTexUnit: gl.getUniformLocation(this.program, 'colorTexUnit'), // uniform 変数のロケーション @@@,
+      mMatrix: gl.getUniformLocation(this.program, 'mMatrix'),
     }
   }
 
@@ -260,11 +264,22 @@ class App {
     const vp = m4.multiply(projectionMatrix, viewMatrix)
     const mvp = m4.multiply(vp, modelMatrix)
 
+    // テクスチャを０番ユニットにバインドする @@@
+    gl.activeTexture(gl.TEXTURE0)
+    gl.bindTexture(gl.TEXTURE_2D, this.normalTexture)
+
+    // テクスチャを1番ユニットにバインドする @@@
+    gl.activeTexture(gl.TEXTURE1)
+    gl.bindTexture(gl.TEXTURE_2D, this.colorTexture)
+    
     // プログラムオブジェクトを選択し uniform 変数を更新する @@@
     gl.useProgram(this.program)
     gl.uniformMatrix4fv(this.uniformLocation.mvpMatrix, false, mvp)
     gl.uniformMatrix4fv(this.uniformLocation.normalMatrix, false, normalMatrix)
     gl.uniform1f(this.uniformLocation.uTime, uTime)
+    gl.uniform1i(this.uniformLocation.normalTexUnit, 0); // テクスチャユニットの番号を送る @@@
+    gl.uniform1i(this.uniformLocation.colorTexUnit, 1); // テクスチャユニットの番号を送る @@@
+    gl.uniformMatrix4fv(this.uniformLocation.mMatrix, false, modelMatrix);
 
     // VBO と IBO を設定し、描画する
     WebGLUtility.enableBuffer(gl, this.baloonVBO, this.attributeLocation, this.attributeStride, this.balloonIBO)
@@ -272,21 +287,29 @@ class App {
 
   }
 
-  // load() {
-  //   return new Promise((resolve, reject) => {
-  //     const gl = this.gl
-  //     if (gl == null) {
-  //       const error = new Error('not initialized')
-  //       reject(error)
-  //     } else {
-  //         vs = WebGLUtility.createShaderObject(gl, vertexshader, gl.VERTEX_SHADER)
-  //         fs = WebGLUtility.createShaderObject(gl, fragmentshader, gl.FRAGMENT_SHADER)
-  //         this.program = WebGLUtility.createProgramObject(gl, vs, fs)
-  //         // Promise を解決
-  //         resolve()
-  //     }
-  //   })
-  // }
+  load() {
+    return new Promise((resolve, reject) => {
+      const gl = this.gl
+      if (gl == null) {
+        const error = new Error('not initialized')
+        reject(error)
+      } else {
+          // 画像の読み込み @@@
+          const pTex1 = WebGLUtility.loadImage('texture/wrinkle-normal.jpg').then(img => {
+            // 読み込んだ画像からテクスチャを生成 @@@
+            this.normalTexture = WebGLUtility.createTexture(gl, img)
+          })
+          // 画像の読み込み @@@
+          const pTex2 = WebGLUtility.loadImage('texture/balloon-d1.png').then(img => {
+            // 読み込んだ画像からテクスチャを生成 @@@
+            this.colorTexture = WebGLUtility.createTexture(gl, img)
+          })
+          // Promise を解決
+          Promise.all([pTex1, pTex2]).then(resolve)
+          // resolve()
+      }
+    })
+  }
 
 
 
