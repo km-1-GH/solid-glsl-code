@@ -180,7 +180,7 @@ class App {
 
         // ERROR: 128WebGL: INVALID_VALUE: enableVertexAttribArray: index out of range
         console.log(this.attributeLocation);  // (5) [0, 1, 2, 3, -1] ??????????????????
-        this.attributeLocation = [0, 1, 2, 3, 4]
+        // this.attributeLocation = [0, 1, 2, 3, 4]
 
     this.attributeStride = [
       3,
